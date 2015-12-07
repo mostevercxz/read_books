@@ -52,7 +52,7 @@ Figure hardware organization:
  * Controllers are chip sets in the device itself or on the system's main printed circuit board(motherboard)
  * Adapter is a card that plugs into a slot on the motherboard(4G memory laptop) 
 3. Main Memory : is a temporary storage device that holds both a program and the data it manipulates while the processor is executing the program.
- * Physically, main memory consists of a collection of dunamic random access memory(DRAM)
+ * Physically, main memory consists of a collection of dynamic random access memory(DRAM)
  * Logically, memory is organized as a linear array of bytes.
 4. Processor : CPU is the engine that interprets instructions stored in main memory. At its core is a word-size storage device(register) called the program counter(PC). Simple ops:
  * Load (memory -> register)
