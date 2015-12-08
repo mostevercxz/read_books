@@ -83,12 +83,12 @@ The idea behind caching is that a sys can get the effect of both a very large me
 Figure L1 cache, L2 cache, L3 cache(SRAM)
 
 ### 1.7 os manages the hardware
-We can think of os as a layer of software interposed between the application proram and the hardware.
+We can think of os as a layer of software interposed between the application program and the hardware.
 
 The os has two primary purposes:
 
 1. protect the hardware from misuse by runaway apps.
-2. procide apps with simple and uniform mechanisms for manipulating complicated and low-level hardware devices.
+2. provide apps with simple and uniform mechanisms for manipulating complicated and low-level hardware devices.
 
 #### 1.7.1 Processes
 the notion of process : the most important and successful ideas in CS.
@@ -147,7 +147,7 @@ Two demands : we want computers to do more, run faster.
  * *uniprocessor sys* : most actual computing was done by a single processor, even if that processor had to switch among multiple tasks
  * *multiprocessor sys* : a sys consisting of multiple processors all under the control of a single OS kernel, becoming commonplace with the advent of *multi-core processors* and *hyperthreading*
  * multi-core processors,Intel core i7 organization : 
- * hyperthreading(simultaneous multi-threading) : a technology that allows a single CPU to execute multiple flows of control. Whereas a wnventional processor requires around 20:000 clock cycles to shift between different threads, a hyperthreaded processor decides which of its threads to execute on a cycle by cycle basis.
+ * hyperthreading(simultaneous multi-threading) : a technology that allows a single CPU to execute multiple flows of control. Whereas a conventional processor requires around 20:000 clock cycles to shift between different threads, a hyperthreaded processor decides which of its threads to execute on a cycle by cycle basis.
  * The use of multiprocessing can improve sys performance in two ways : 
      1. reduces the need to simulate concurrency when performing multiple tasks
      2. run a single app faster only if that app is expressed in terms of multiple threads that can effectively execute in parallel.
