@@ -45,6 +45,7 @@ Why programmers need to understand how compilation systems work ?
 
 #### 1.4.1 hardware organization of a system
 Figure hardware organization: 
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp_hardware_organization.png "hardware organization")
 
 1. Buses : a collection of electrical conduits that carry bytes of infomation back and forth between the components. Buses are typically designed to transfer fixed-size chunks of bytes known as words(4 bytes-32bit, or 8 bytes-64 bit)
 
@@ -61,18 +62,21 @@ Figure hardware organization:
  * Jump (overwrite PC)
 
 #### 1.4.2 Running hello
-keyboard './hello' -> IO bridge -> Bus Interface -> Register -> IO -> memory
 
-(Press Enter) Disk -> Disk Controller -> IO bridge -> memory
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/csapp_reading_hello.png "read hello")
+>keyboard './hello' -> IO bridge -> Bus Interface -> Register -> IO -> memory
 
-memory -> bus interface -> register -> bus interface -> IO bridge -> Graphics adapter -> Screen Display
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp_load_hello_from_disk.png "load hello from disk")
 
-Figures:
+>(Press Enter) Disk -> Disk Controller -> IO bridge -> memory
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp_write_output_to_display.png "write output to disk")
+>memory -> bus interface -> register -> bus interface -> IO bridge -> Graphics adapter -> Screen Display
 
 ### 1.5 Caches Matter
 The processor-memory gap(processor read 100 times faster than memory)
 
-Figure Cache memories:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/cache_memories.png "Figure Cache memories")
 
 
 The idea behind caching is that a sys can get the effect of both a very large memory and a very fast one by exploiting locality, the tendency for programs to access data and code in localized regions.
@@ -80,7 +84,7 @@ The idea behind caching is that a sys can get the effect of both a very large me
 **Application programmers who are aware of cache memories can exploit them to improve the performance of their programs by an order of magnitude.**
 
 ### 1.6 storage devices from a hierarchy
-Figure L1 cache, L2 cache, L3 cache(SRAM)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/memory_hierarchy.png "memory hierarchy")
 
 ### 1.7 os manages the hardware
 We can think of os as a layer of software interposed between the application program and the hardware.
@@ -107,6 +111,7 @@ A process can actually consists of multiple execution units called threads, each
 
 #### 1.7.3 virtual memory
 An abstraction that provides each process with the illusion that it has exclusive use of the main memory.(virtual address space, VAS)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/process_virtual_memory_address.png "process vax")
 
 VAS consists of a number of well-defined areas :
 
@@ -148,6 +153,7 @@ Two demands : we want computers to do more, run faster.
  * *multiprocessor sys* : a sys consisting of multiple processors all under the control of a single OS kernel, becoming commonplace with the advent of *multi-core processors* and *hyperthreading*
  * multi-core processors,Intel core i7 organization : 
  * hyperthreading(simultaneous multi-threading) : a technology that allows a single CPU to execute multiple flows of control. Whereas a conventional processor requires around 20:000 clock cycles to shift between different threads, a hyperthreaded processor decides which of its threads to execute on a cycle by cycle basis.
+ ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/inter_corei7_organization.jpg "inter corei7")
  * The use of multiprocessing can improve sys performance in two ways : 
      1. reduces the need to simulate concurrency when performing multiple tasks
      2. run a single app faster only if that app is expressed in terms of multiple threads that can effectively execute in parallel.
