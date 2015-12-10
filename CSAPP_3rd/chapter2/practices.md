@@ -54,3 +54,10 @@ bool_xor : x ⊕ y = (x & ~y) | (~x & y) = bic(x,y) | bic(y, x) = bis(bic(x,y), 
 ## 2.15
 !(x ^ y)
 ## 2.16, 2.17 too easy
+## 2.18 see it easy, -0x58 = -88
+## 2.21
+unsigned 0
+int 1
+unsigned 0 
+int 1
+unsigned 1

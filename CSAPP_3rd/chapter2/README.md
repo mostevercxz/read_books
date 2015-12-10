@@ -144,10 +144,9 @@ bits and filling the right end with k zeros
 The c standards carefully avoid stating what should be done in such a case. On many machines, the shift instructions consider only the lower log2(w) bits of the shift amount when shifting a w bit value, and so 
 the shift amount is computed as k mod w(let w=32, log2(w) = 5, k = 100, k & 00011111 = k mod 32 = k mod w).
 
-The behaviour is not guaranteed for C programs however, and so shift amouts should be kept less than the word size.
+The behaviour is not guaranteed for C programs however, and so shift amouts should be kept less than the number of bits in the value being shifted.
 
 ### 2.2 Integer representations
-func : B2U binary to unsigned 
 #### 2.2.1 integral data types
 The only machine-dependent range indicated is for size designator *long*. 64-bit 8byte, 32-bit 4 byte.
 
@@ -156,32 +155,33 @@ The range of negative numbers extends one further than the range of positive num
 The C standards define minimum ranges of values that each data type must be able to represent. (guaranteed ranges for C integral data types). int could be 2-byte, long 4-byte ([this is the standard link](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf))
 
 #### 2.2.2 unsigned encodings
-![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/b2u.png "b2u")
+1. **Principle : Definition of unsigned encoding,**
+for vector x = [x(w-1),x(w-2),...x(0)]
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/formula_21.png "b2u")
 
+2. **Range of values:**
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_range.png "unsigned range")
+The unsigned binary representation has the important property that **every number between 0 and 2^w-1 has a unique encoding as a w-bit value.**
 
-The unsigned binary representation has the important property that every number between 0 and 2^w-1 has a unique encoding as a w-bit value.
+3. **Principle:Uniqueness of unsigned encoding,**
+Function B2U(w) is a bijection.
 
-**Principle**:
-Uniqueness of unsigned encoding, Function B2U(w) is a bijection.
 
-The mathematical term bijection refers to a function f that goes two ways: it maps a value x to a value y where y = f(x), but it can also operate in reverse, since for every y, there is a unique value x such that f(x) = y. This is given by the inverse function f-1, where, for our example, x = f-1(y).
-
+The mathematical term **bijection** refers to a function f that goes two ways: it maps a value x to a value y where y = f(x), but it can also operate in reverse, since for every y, there is a unique value x such that f(x) = y. This is given by the inverse function f-1, where, for our example, x = f-1(y).
 B2U(w), U2B(w)
 
 #### 2.2.3 two's-complement encodings(二补数)
-two's-complement is defined by interpreting the most significant bit of the word to have negative weight.B2T(w)
+two's-complement is defined by interpreting the most significant bit of the word to have negative weight.
+**B2T(w)**
 
-![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two-complement.png "two's-complement")
-
+1. **Principle : Definition of two's-complement encoding**, for x = [x(w-1), x(w-2),...x(0)]
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/formula23.png "two's-complement")
 ![alt-text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/b2t.png "b2t examples")
 
-The least representable value is given by bit vector [10...0], TMin(w) = -2^(w-1); the max value is given by bit vector [01...1], TMax(w) = 求和从0->(w-2)2^i = 2^(w-1) - 1. 假设w=4, TMin(4)=-8, TMax(4)=7
-
-B2T(w) is a mapping of bit patterns of length w to numbers between TMin(w) and TMax(w):
+2. **range of values, B2T(w)** is a mapping of bit patterns of length w to numbers between TMin(w) and TMax(w): **The least representable value is given by bit vector [10...0], TMin(w) = -2^(w-1); the max value is given by bit vector [01...1], TMax(w) = 求和从0->(w-2)2 ^ i = 2^(w-1) - 1.** 假设w=4, TMin(4)=-8, TMax(4)=7
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/b2t_map.png "b2t map")
 
-**Priciple**: Uniqueness of two's-complement encoding, function B2T(w) is a bijection. 
+**3. Priciple : uniqueness of two's-complement encoding**: function B2T(w) is a bijection. 
 
 Define T2B(w) (two's-complement --> binary) to be the inverse of B2T(w).
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/important_nums.png "important numbers")
@@ -190,4 +190,118 @@ Define T2B(w) (two's-complement --> binary) to be the inverse of B2T(w).
 
 We will drop the subscript w and refer to the values UMax, TMin and TMax when w can be inferred from context or is not central to the discussion.
 
-|TMin| = |TMax| + 1
+**4. Observations:**
+
+ 1. |TMin| = |TMax| + 1
+ 2. UMax = 2TMax + 1 
+
+fixed size integer types(int32_t,int64_t):
+
+    #include <inttypes.h>
+    printf("x=%" PRId32 ",y=%" PRIu64 "\n", x, y)
+
+    #define PRId32 "ld"
+    #define PRIu64 "llu"
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/guaranteed_ranges.png "guaranteed ranges")
+
+Programmers who are concerned with maximizing portability across all possible machines should not assume any particular range of representable values, beyond the ranges indicated in Figure 2.11, nor should they assume any particular representation of signed numbers.
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_other_standard_representation.png "other representations")
+
+Both of the representations have the curious property that there are two different encodings of number 0. +0 = [00...0],
+ 
+ * sign-magnitude, -0 = [10...0]
+ * one's-complement, -0 = [11...1]
+
+Note the different position of apostrophes two's complement versus ones' complement. 省略符号,呼语
+
+**Questions,why?**
+
+1. Two's complement : for nonnegative x we compute a w-bit representation of -x as 2^w-x(a signle two);
+2. One's complement : -x as [111...1] - x(multiple ones)
+
+Two's complement Explain:
+
+    -t = -2^(w-1) + 2^(w-1) - t , 
+    most siginificant bit is 1, the total value of other bits is 2 ^ (w-1) - t,
+    so the total unsigned value is:
+    most siginificant bit value 2^(w-1) + other bits value 2 ^(w-1) -t = 2 ^ w - t
+    -t = x^w - t
+
+
+One's complement explain:
+
+    -t = -(2 ^ (w-1) - 1) + 2 ^(w-1) -1 -t
+    most siginificant bit is 1, total value of other bits is 2^(w-1) -1-t
+    so the total unsigned value is:
+    2 ^ (w-1) + 2 ^(w-1) -1-t = 2^w-1-t = [111...1] - t
+    -t = [111...1] - t
+
+#### 2.2.4 conversions between signed and unsigned
+
+**1. From a mathematical perspective:**
+
+ * we want to preserve any value that can be represented in both forms.
+ * converting a negative value to unsigned might yield
+zero
+ * Converting an unsigned value that is too large to be represented in two'scomplement form might yield TMax
+
+**2. For most implementations of C**, based on a bit-level perspective(conversions between unsigned and signed numbers with the same word size):
+
+  * casting from *short* to *unsigned short* changed the numeric value, but not the bit representation.
+
+
+    0 <= x <= UMax(w), U2B(w)(x) unique
+    Tmin(w) <= x <= TMax(w), T2B(w)(x) unique
+
+>signed and unsigned are **the same word size**
+>
+>T2U(w)(x) = B2U(w)(T2B(w)(x)), Tmin(w) <= x <= TMax(w)
+>U2T(w)(x) = B2T(w)(U2T(w)(x)), 0 <= x <= UMax(w) 
+
+**3. Principle : Conversion from two's complement --> unsigned**:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/formula25.png  "guaranteed  ranges")
+
+**4. derivation : Conversion from two's complement --> unsigned**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/proof_t2u.png  "proof")
+
+
+Going in the other direction, we can get:
+
+**5.Principle : Conversion from unsigned --> two's complement**:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/proof_u2t.png  "proof u2t")
+
+**6.derivation:Conversion from unsigned --> two's complement**:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/proof_u2t_derivition.png  "proof_u2t_derivition.png")
+
+**7.summary**:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/summary224.png  "proof u2t")
+
+#### 2.2.5 signed versus unsigned in C
+**1.explicit, implicit, printf conversion**
+Although the C standard does not specify precisely how this conversion should be made, most systems follow the rule that the underlying bit representation does not change.
+
+*printf* does not make use of any type info.
+printf("-1=%u", -1);
+-1=4294967295
+
+**2.operation conversion**
+When an operation is performed where one operand is signed and the other is unsigned, C implicitly casts the signed argument to unsigned and performs the operations assuming the numbers are nonnegative.
+(gdb)p -1u
+
+#### 2.2.6 expanding the bit representation of a number
+Convert from a smaller to a larger data type:
+
+ 1. unsigned number --> larger data type, add leading zeros to the representation(zero extension)
+ 2. two's-complement --> larger, sign extension, adding copies of the most significant bit to the representation.
+
+**1.principle:expansion of an unsigned number by zero extension**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/zero_extension.png  "zero")
+
+**2.principle:expansion of a two's-complement number by sign extension**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/sign_extension.png  "sign")
