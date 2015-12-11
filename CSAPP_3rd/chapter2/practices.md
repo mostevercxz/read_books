@@ -61,3 +61,58 @@ int 1
 unsigned 0 
 int 1
 unsigned 1
+
+## 2.23
+    int fun1(unsigned word){
+        return (int)( (word<<24)>>24 );
+    }
+    int fun2(unsigned word){
+        return ((int)(word<<24)) >> 24;
+    }
+
+    0x00000076 0x76=118 0x76=118
+    0x87654321 0x21=33 0x21=33
+    0x000000C9 0xC9=201 0xc9-2^8=-55
+    0xEDCBA987 0X87=135 0X87-2^8=-121
+
+## 2.24(p82)
+unsigned (4->3) 
+0 0
+2 2
+9 9%8=1
+11 11%8=3
+15 15%8=7
+
+two's-complement(4->3)
+0 0
+2 2
+-7 U2T((-7 + 2^4)%2^3)=U2T(1)=1
+-5 U2T((-5+2^4)%2^3)=U2T(3)=3
+-1 U2T(15%8)=U2T(3)(7)=7-8=-1
+
+## 2.25
+unsigned length
+(unsigned)0-1=UMax, memory out of range
+for (i=0; i < length; ++i)
+
+##2.26
+s length < t length
+(unsigned)2-(unsigned)3 > 0
+
+    int strlonger(char *s, char *t){
+        return strlen(s) - strlen(t) > 0;
+    }
+
+##2.27
+    int uadd_ok(unsigned x, unsigned y)
+    {
+      if (x+y<x){return 0;}
+      return 1;
+    }
+
+## 2.28(p89)
+0 0 0
+5 11 B
+8 8 8
+13 3 3
+15 1 1

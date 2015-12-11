@@ -1,6 +1,5 @@
 #Part I, Program Structure and Execution
 1. void swap(int x, int y) {y = x ^ y; x = x ^ y; y = x ^ y;}; swap function is not suitable for exchange array members. 异或版本的swap不适合在转置奇数数组中使用
-2. 
 ## chapter 2,Representing and Manipulating info
 We consider the three most important representations of numbers:
 
@@ -305,3 +304,116 @@ Convert from a smaller to a larger data type:
 
 **2.principle:expansion of a two's-complement number by sign extension**:
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/sign_extension.png  "sign")
+
+**3.derivation:expansion of a two's-complement by sign extension**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/proof_sign_extension.png "proof sign extension")
+
+#### 2.2.7 Truncating numbers
+**1.method**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_method.png "truncate method")
+Drop the high-order w-k bits.
+
+**2.principle:truncation of unsigned number**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_unsigned.png "unsigned")
+
+**3.derivation:truncation of an unsigned number**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_unsigned_proof.png "truncate_unsigned_proof")
+
+**4.principle:truncation of atwo's-complement number:**
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_two.png "truncate two")
+
+**5.derivation:truncation of two's-complement number**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_two_proof.png "truncate two proof")
+
+#### 2.2.8 advice on signed versus unsigned
+**Bug code**
+
+    void fun(float a[], unsigned length){
+      int result = 0;
+      for (int i = 0; i <= length-1; ++i)
+      {
+        result += a[i];
+      }
+    }
+
+    void strlonger(char *s, char *t){
+      return strlen(s) - strlen(t) > 0;
+    }
+
+### 2.3 Integer arithmetic
+1. two positive numbers can yield a negative result
+2. x < y **NOT EQUAL** x - y < 0
+
+#### 2.3.0 Mathmetical knowledge
+1. **Modular arithmetic**(同余) [wikipedia Modular_arithmetic](https://en.wikipedia.org/wiki/Modular_arithmetic) is a system of arithmetic for integers, where numbers "wrap around" upon reaching a certain value-the modulus. A familiar use of modular arithmetic is in the 12-hour clock, in which the day is divided into two 12-hour periods. If the time is 7:00 now, then 8 hours later it will be 3:00. Usual addition would suggest that the later time should be 7+8=15, but this is not the answer because clock time "wraps around" every 12 hours; in 12-hour time, there is no "15 o'clock".
+2. **Abelian group**(阿贝尔群) [wikipedia Abelian group](https://en.wikipedia.org/wiki/Abelian_group). In abstract algebra, an abelian group,also called a commutative group. is a group in which the result of applying the group operation to two groups elements that does not depend the order in which they are written. Definition: An abelian group is a set, A, together with an operation • that combines any two elements a and b to form another element denoted a • b. The symbol • is a general placeholder for a concretely given operation. To qualify as an abelian group, the set and operation, (A, •), must satisfy five requirements known as the abelian group axioms:
+ 1. Closure : For all a, b in A, the result of the operation a • b is also in A.
+ 2. Associativity : For all a, b and c in A, the equation (a • b) • c = a • (b • c) holds.
+ 3. Identity element : There exists an element e in A, such that for all elements a in A, the equation e • a = a • e = a holds.
+ 4. Inverse element : For each a in A, there exists an element b in A such that a • b = b • a = e, where e is the identity element.
+ 5. Commutativity : For all a, b in A, a • b = b • a.
+3. space
+
+#### 2.3.1 unsigned addition
+0 <= x,y < 2^w, w-bit
+0 <= x+y <= 2^(w+1)-2,need (w+1)-bit
+
+**1. Define the operation +uw for arguments** x,y,0 <= x,y < 2^w, as the result of truncating the integer sum *x+y* to be w-bits long and then viewing the result as an unsigned number. 
+
+Security vulnerablity(maxlen=-1):
+
+    void *memcpy(void *dest, void *src, size_t n);
+    int copy_from_kernel(void *user_dest, int maxlen)
+    {
+      memcpy(user_dest, buf, maxlen);
+    }
+
+**2.principle:unsigned addition**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_addition.png "unsigned addition")
+
+**3.derivation:unsigned addition**:
+
+x+y<2^w, leading bit in the (w+1)-bit representation is 0; 2^w<=(x+y)<2^(w+1),leading bit in the (w+1)-bit representation is 1, discarding leading bit is equalent to subtracting 2^w from the sum.
+
+**4.definition of *overflow***:
+
+An arithmetic operation is said to *overflow* when the full integer result cannot fit within the word size limits of the data type.
+
+executing C programs, overflows are not signed as errors.
+
+**5.principle:detecting overflow og unsigned addition**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/addition_overflow.png "addition overflow")
+
+**6.derivation:detecting overflow of unsigned addition**:
+
+    if s is overflow, s >= 2^w, s = x+y-2^w, y<2^w
+    s = x + (y-2^w) < x
+
+**7.principle:unsigned negation**:
+**8.derivation:unsigned negation**:
+
+Modular addition forms abelian group. It is commutative, associative, identify-element 0, every element has an additive inverse. This additive inverse operation can be characterized as follows:
+
+For any number 0<=x<=2^w, its unsigned negation is:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_negation.png "unsigned negation")
+
+(x+2^w-x) mode 2^w = 2^w mod 2^w = 0, hence 2^w-x is the inverse of x.
+
+#### 2.3.2 two's-complement addition
+
+#### 2.3.3 two's-complement negation
+#### 2.3.4 unsigned multiplication
+#### 2.3.5 two's-complement multiplication
+#### 2.3.6 multiplying by constants
+#### 2.3.7 dividing by powers of 2
+#### 2.3.8 final thoughts on integer arithmetic
+
+### 2.4 floating point
+#### 2.4.1 fractional binary numbers
+#### 2.4.2 IEEE floating-point representation
+#### 2.4.3 example numbers
+#### 2.4.4 rounding
+#### 2.4.5 floating-point operations
+#### 2.4.6 floating point in C
+
+### 2.5 Summary
