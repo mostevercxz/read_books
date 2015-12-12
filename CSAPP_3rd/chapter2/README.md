@@ -246,7 +246,7 @@ One's complement explain:
 zero
  * Converting an unsigned value that is too large to be represented in two'scomplement form might yield TMax
 
-**2. For most implementations of C**, based on a bit-level perspective(conversions between unsigned and signed numbers with the same word size):
+**2. For most implementations of C**, based on a bit-level perspective(general rule : conversions between unsigned and signed numbers with the same word size, the numeric values might change, but the bit patterns do not.):
 
   * casting from *short* to *unsigned short* changed the numeric value, but not the bit representation.
 
@@ -306,6 +306,8 @@ Convert from a smaller to a larger data type:
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/sign_extension.png  "sign")
 
 **3.derivation:expansion of a two's-complement by sign extension**:
+(**my proof**)
+
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/proof_sign_extension.png "proof sign extension")
 
 #### 2.2.7 Truncating numbers
@@ -319,7 +321,7 @@ Drop the high-order w-k bits.
 **3.derivation:truncation of an unsigned number**:
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_unsigned_proof.png "truncate_unsigned_proof")
 
-**4.principle:truncation of atwo's-complement number:**
+**4.principle:truncation of a two's-complement number:**
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/truncate_two.png "truncate two")
 
 **5.derivation:truncation of two's-complement number**:
@@ -400,13 +402,97 @@ For any number 0<=x<=2^w, its unsigned negation is:
 (x+2^w-x) mode 2^w = 2^w mod 2^w = 0, hence 2^w-x is the inverse of x.
 
 #### 2.3.2 two's-complement addition
+**1.principle:two's-complement addition**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_addition.png "two_addition")
 
-#### 2.3.3 two's-complement negation
+**2.derivation:two's-complement addition**:
+Since two's-complement addition has the exact same bit-level representation as unsigned addition, we can characterize the operation +tw :
+
+ 1. converting its arguments to unsigned
+ 2. performing unsigned addition
+ 3. converting back to two's-complement
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_addtion_derivation.png "derivation")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_addition_proof.png "proof")
+
+**3.detection of overflow in two's-complement addition**:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_addition_detection.png "detection")
+
+#### 2.3.3 two's-complement negation(补码非)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_negation.png "two negation")
+
+Determine the two's-complement negation of a value represented at the bit-level:
+
+ 1. complement the bits and then increment the result. In C, for any integer value x, -x=~x+1 (**my proof**)
+ 2.  split the bit vector into two parts,![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/second_negation_method.png "second negation")
+
+proof : **-x=~x+1**
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/my_proof_negation.png "my proof negation")
+
 #### 2.3.4 unsigned multiplication
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_multiplication.png "unsigned *")
+
 #### 2.3.5 two's-complement multiplication
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_multiple_range.png "two multiple range")
+
+**1.priciple : two's-complement multiplication**(2w-bit->w-bit)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_multiple.png "two multiple")
+
+We claim that the bit-level representation of the product operation is identical for both unsigned and two's-complement multiplication.
+
+**2.principle:bit-level equivalence of unsigned and two's-complement multiplication**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/bit_equivalence_proof.png "bit_equivalence_proof")
+
 #### 2.3.6 multiplying by constants
+***
+1.**background**
+
+Integer multiply instructions on many machines requires 10 or more clock cycles, whereas other integer ops(add,subtract,shift) require 1 clock cycle. Even on intel core i7 haswell, inter multiply requires 3 clock cycles.
+***
+
+2.multiplication by power of 2
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/multiple_constant.png "Multiple constant")
+***
+3.unsigned multiplication
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/multiple_unsigned.png "multiple_unsigned")
+***
+4.two's-complement multiplication
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/mulitple_two.png "multiple_two")
+***
+5.integer multiplication is more costly than shifting and adding,subtracting. 14 = 2^4-2^1, x*14=(x<<4-x<<1)
+***
+
 #### 2.3.7 dividing by powers of 2
+***
+1.**introduction**, integer division on most machines is even slower than integer multiplication, requiring 30 or more clock cycles.
+***
+2.**integer division always rounds toward zero,unsigned division**.
+For any real number a, define floor(a) such that floor(a) <= a < floor(a) + 1, floor(3.14)=3, floor(-3.14)=-4,floor(3)=3; ceil(a) such that ceil(a)-1 < a <= ceil(a), ceil(3.14)=4, ceil(-3.14)=-3, ceil(3)=3
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_division.png "unsigned_division")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_division_proof.png "unsigned_division_proof")
+This bit vector has numeric value x', which is the value of x >> k.
+***
+3.two's-complement division
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_division.png "two_division")
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_division_proof.png "two_division_proof")
+***
+4.correct the division
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/correct_division.png "correct_division")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/correct_division_proof.png "correct_division_proof")
+
+(x < 0 ? x + (1<<k)-1 : x) >> k will compute x/2^k
+
+**my proof**: x >> 31 will generate 0xffffffff if x < 0; 0 if x >0
+***
 #### 2.3.8 final thoughts on integer arithmetic
+We have also seen that the two's-complement representation provides a clever
+way to represent_both negative and positive values, while using the same bit-level implementation as are used to perform unsigned arithmetic-operations such as
+addition, subtraction, multiplication, and even division have either identical or very similar bit-level behaviors, whether the operands are in unsigned qr two's-complement form.
 
 ### 2.4 floating point
 #### 2.4.1 fractional binary numbers

@@ -116,3 +116,102 @@ s length < t length
 8 8 8
 13 3 3
 15 1 1
+
+##2.29 easy
+##2.30
+    int tadd_ok(int x, int y)
+    {
+      if(x<0 && y < 0 && (x+y) >=0)
+      {return 0;}
+      else if (x>0 && y >0 && (x+y) <= 0)
+      {return 0;}
+      else
+      {return 1;}
+    }
+
+##2.31
+proof(negative overflow):
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/practise213.png "detection")
+
+So, overflow will still return 1
+
+##2.32
+x=0, y=-2^(w-1)
+
+##2.33
+0 0 0 0
+5 5 -5 1011=B
+8 -8 -8 8
+D=1101 -3 3 3
+F=1111 -1 1 1
+
+##2.34,easy
+##2.35
+devise 设计想出发明 a mathematical justification of your approach, consider w-bit number x(x!=0),y,p,q, p is the result of performing two's-complement multiplication on x and y, q is the result of dividing p by x
+
+1. show that x*y(the integer product of x and y) can be written in the form xy=p+t * 2^w, where t!=0 if and only if the computation of p overflows.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/practise235.png "practise")
+2. show that p can be written in the form p = x*q+r, where |r| < |x|
+this is by the definition of integer division.
+3. show that q=y if and only if r=t=0
+x*y-t*2^w=x*q+r
+suppose q=y, r = -t*2^w, |r| < 2^(w-1),t=0
+suppose r=t=0, x*y=x*q, y=q
+
+##2.36
+    int tmul_ok(int x, int y)
+    {
+      int64_t result = (int64_t)x*y;
+      return result == (int)result;
+    }
+
+##2.37(p101)
+int and size_t are 32-bits.
+A.no, the uint64_t asize passed to malloc() may still overflow.
+B.if (asize == (int)asize){//go on}
+else{return "memory not enough"}
+
+##2.38
+k=0,1,2,3; b=0 or a
+2,4,8,3,5,9
+
+##2.39
+form a : (x<<n) + (x<<(n-1)) + .. + (x <<m)
+form b : (x<<(n+1)) - (x << m)
+if n is the most significant bit 
+form b : (x<<n) - (x << m) + (x<<n)
+
+##2.40
+(x << 2) + (x << 1)
+(x << 5) - x
+(x << 1) - (x << 3)
+(X << 6) - (X << 3) - X
+##2.41(p103)
+the rule is to choose from 
+A when n=m;(form a:1 instruction;form b:2 insrtuction)
+either form when n=m+1(2 instrction both)
+B when n > m + 1(form b:2 instructions; form a more than 2 instruction)
+ 
+##2.42
+x > 0, bias=0;
+x < 0, bias=(1 << 4)-1=15
+int div16(int x)//return x/16
+{
+  int bias = (x >> 31) & 0xF;
+  return (x + bias) >> 4;
+}
+
+##2.43
+M=31, N=8
+
+##2.44(p108)
+-2^(w-1) <= x < 2^(w-1)
+
+A. (x>0) || (x-1<0), false, x = -2^(w-1) =TMin
+B. (x&7) !=7 || (x<<29<0), true
+C. (x*x) >= 0, false, x = 65535=(2^16-1) **Question,how to find this number**
+D. x < 0 || -x <= 0, true
+E. x > 0 || -x >= 0, fasle, x = -2^(w-1)
+F. x + y == uy + ux, true
+G: x*~y + uy * ux == -x,  true, ~y=-y-1, x*-y-x-uy*ux = -x
