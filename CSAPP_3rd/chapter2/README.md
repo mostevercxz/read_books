@@ -1,5 +1,5 @@
 #Part I, Program Structure and Execution
-1. void swap(int x, int y) {y = x ^ y; x = x ^ y; y = x ^ y;}; swap function is not suitable for exchange array members. 异或版本的swap不适合在转置奇数数组中使用
+void swap(int x, int y) {y = x ^ y; x = x ^ y; y = x ^ y;}; swap function is not suitable for exchange array members. 异或版本的swap不适合在转置奇数数组中使用
 ## chapter 2,Representing and Manipulating info
 We consider the three most important representations of numbers:
 
@@ -450,36 +450,34 @@ We claim that the bit-level representation of the product operation is identical
 1.**background**
 
 Integer multiply instructions on many machines requires 10 or more clock cycles, whereas other integer ops(add,subtract,shift) require 1 clock cycle. Even on intel core i7 haswell, inter multiply requires 3 clock cycles.
-***
 
 2.multiplication by power of 2
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/multiple_constant.png "Multiple constant")
-***
+
 3.unsigned multiplication
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/multiple_unsigned.png "multiple_unsigned")
-***
+
 4.two's-complement multiplication
 
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/mulitple_two.png "multiple_two")
-***
+
 5.integer multiplication is more costly than shifting and adding,subtracting. 14 = 2^4-2^1, x*14=(x<<4-x<<1)
 ***
 
 #### 2.3.7 dividing by powers of 2
-***
 1.**introduction**, integer division on most machines is even slower than integer multiplication, requiring 30 or more clock cycles.
-***
+
 2.**integer division always rounds toward zero,unsigned division**.
 For any real number a, define floor(a) such that floor(a) <= a < floor(a) + 1, floor(3.14)=3, floor(-3.14)=-4,floor(3)=3; ceil(a) such that ceil(a)-1 < a <= ceil(a), ceil(3.14)=4, ceil(-3.14)=-3, ceil(3)=3
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_division.png "unsigned_division")
 
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/unsigned_division_proof.png "unsigned_division_proof")
 This bit vector has numeric value x', which is the value of x >> k.
-***
+
 3.two's-complement division
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_division.png "two_division")
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/two_division_proof.png "two_division_proof")
-***
+
 4.correct the division
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/correct_division.png "correct_division")
 
@@ -493,13 +491,92 @@ This bit vector has numeric value x', which is the value of x >> k.
 We have also seen that the two's-complement representation provides a clever
 way to represent_both negative and positive values, while using the same bit-level implementation as are used to perform unsigned arithmetic-operations such as
 addition, subtraction, multiplication, and even division have either identical or very similar bit-level behaviors, whether the operands are in unsigned qr two's-complement form.
+***
 
 ### 2.4 floating point
+IEEE Standard 754
+
+1. how numbers are represented in the IEEE floating-point format
+2. explore issues of rounding, when a number cannot be represented exactly in the foramt and hence must be adjusted upward or downward
+3. explore the mathematical properties of addition, multiplication and relational operators
+***
 #### 2.4.1 fractional binary numbers
+the symbol '.' now becomes a **binary point**.
+shorthand notation 1.0 - e for 63/64
+***
 #### 2.4.2 IEEE floating-point representation
+**The IEEE floating-point standard** represents a number in V=(-1)^s * M * 2^E :
+1. the sign s determines whether the number is negative(s=1) or positive(s=0)
+2. the significand M is a fractional binary number that ranges either between (1,2-e) or (0,1-e)
+3. the exponent E weights the value by a power of 2.
+
+**The bit representation** is divided into three fields:
+
+1. the single sign bit s directly encodes the sign s
+2. the k-bit exponent field exp=e(k-1)...e(1)e(0) encodes the exponent E
+3. the n-bit fraction field frac=f(n-1)...f(1)f(0) encodes the significand M, but the value encoded also depends on whether or not the exponent field equals 0.
+
+>float in C : s=1,k=8,n=23 ; double in C: s=1,k=11,n=52
+
+**1. normalized values**:
+
+* exp !=[00...0] && exp !=[11...1]
+* E=e-Bias, e is the unsigned number having bit representation e(k-1)...e(1)e(0) and Bias=2^(k-1)-1, ranges (1-Bias, 2^(k)-2-Bias)=(2-2^(k-1), 2^(k-1)-1)
+* frac is interpreted as 0.f(n-1)...f(1)f(0),M=1+f(implied leading 1 representation,we can view M as 1.f(n-1)...f(1)f(0))
+
+**2.denormalized values**:
+* the exponent field is all zeros.
+* E=1-Bias
+* M=f
+
+denormalized numbers's purposes:
+
+ * provide a way to represent 0(+0.0 all zeros, -0.0, s=1)
+ * represent numbers that are very close to 0.0
+
+**3.Special values**:
+
+* the exponent field is all ones.
+* When the fraction field is all zeros, s=0, -∞; s=1,+∞
+* When the fraction field is nonzero, the resulting value is called NaN, "not a number"(for example:∞-∞).
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_categories.png "float_categories")
+***
 #### 2.4.3 example numbers
+hypothetical 6-bit,k=3,f=2:
+
+range of E : (2-2^2, 2^2-1)=(-2,3)
+V=(-1)^s * M * 2^E
+(1+(.11)2) * 2^3= (1.75 * 8)=14
+
+one interesting property of this representation is that if we interpret the bit representations of the values as unsigned integers, they occur in ascending order, as do the values they represent as floating-point numbers.
+
+the value 1.0's bit representation is:
+0x3f800000
+
+12345 = [11000000111001]=1.1000000111001(2) * 2^13
+bias = 2^7-1=127
+exponent : 127 + 13 = 140 = [10001100]
+fractional : [10000001110010000000000]
+sign : 0
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_example_number1.png "float_example_number1")
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_example_number2.png "float_example_number2")
+***
 #### 2.4.4 rounding
-#### 2.4.5 floating-point operations
+For a value x, we generally want a systematic method of **finding the "closest" matching value x' that can be represented in the desired floating-point format.**
+
+One key problem is to define the direction to round a value that is halfway between two possibilities. 1.50->1.0? or 2.0?
+
+**The IEEE floating point format defines 4 different rounding modes. the default method finds a closest match**
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/rounding_modes.png "round_modes")
+
+Round to even(also called round-to-nearest), it rounds the number either upward or downward such that the least significant digit of the result is even.Thus, it rounds $1.5 to $2.
+
+Why prefer even numbers?
+Rounding upward a set of data values would then introduce a statistical bias into the computation of an average of the values. Rounding toward even numbers 50% upward, 50% downward.
+***
+#### 2.4.5 floating-point operations(p123)
 #### 2.4.6 floating point in C
 
 ### 2.5 Summary
