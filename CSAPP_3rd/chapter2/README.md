@@ -577,6 +577,38 @@ Why prefer even numbers?
 Rounding upward a set of data values would then introduce a statistical bias into the computation of an average of the values. Rounding toward even numbers 50% upward, 50% downward.
 ***
 #### 2.4.5 floating-point operations(p123)
+The IEEE standard specifies a simple rule for determining the result of an arithmetic operation : 
+Viewing floating-point values x and y as real numbers, and some operation O defined over real numbers, the computation should yield Round(x O y), the result of apllying rounding to the exact result of the real operation.
+
+The standard specifies conventions that attempt to be resonable, 1/-0=-∞, 1/+0=+∞
+
+Addition over real numbers also forms an abelian group. While with single-precision floating point the expression (3.14+1e10)-1e10 = 0.0; 3.14+(1e10-1e10)=3.14; +∞-∞=NaN; Nan + x = NaN for any x.
+
+monotonicity 单调性
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_addition.png "float_addition")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_monotonicity.png "float_monotonicity")
+***  
 #### 2.4.6 floating point in C
 
+We assume 1e400 to be infinity,
+ 
+    #define POS_INFINITY 1e400
+    #define NEG_INFINITY (-POS_INFINITY)
+    #define NEG_ZERO (-1.0/POS_INFINITY)
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/float_cast_rules.png "float_cast_rules")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/exercise2541.png "exercise2541")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/2/exercise2542.png "exercise2542")
+
 ### 2.5 Summary
+Most machines encode signed numbers using a two's-complement representation and encode floating-point numbers using IEEE Standard 754.
+
+When casting, between signed and unsigned iptegers, of the same size, most C implementations follow the convention that the underlying bit pattern does not change.
+
+### Question:
+1. What's gonna happen, 
+    int ival = 0x7fffffff;
+    flaot fval = (float)ival;
