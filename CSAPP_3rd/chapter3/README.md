@@ -108,6 +108,124 @@ operand forms:
  3.  memory reference, access some memory location, often called effective address.
  
 ### 3.4.2 data movement instructions
+We group the many different instructions into instruction classes, where the instructions in a class perform the same operation but with different operand sizes.
+
+---
+**MOV class**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/mov_class.png "mov_class")
+
+* source operand : immediate, stored in a register, or stored in memory;
+* destination operand : register or a memory address.
+
+The x86-64 imposes the restriction that a move instruction cannot have both operands refer to memory locations.
+
+    movl $0x12, %eax
+    movw %bp, %sp
+    movb (%rdi, %rcx), %al
+    movb $-1,(%rsp)
+    movq %rax, -12(%rbp)
+
+**movq** can only have immediate source operands that can be represented as 32-bit two's-complement numbers. This value is then sign extended to produce the 64-bit value for the destination. The **movabsq** instruction can have an arbitrary 64-bit immediate value as its source operand and can only have a register as a destination.
+
+movabsq  $0x0011223344556677,%rax  %rax=$0x0011223344556677
+movb $-1,%al                       %rax=$0x00112233445566FF
+movl $-1,%eax                      %rax=$0x00000000FFFFFFFF
+
+---
+copy a smaller source value to a larger destination.
+* source operand : register or stored in memory
+* destination operand : register
+
+**cltq** always uses register %eax as its source and %rax as the destination for the sign-extended result. Same effect : movslq %eax, %rax
+
+###3.4.3 data movement example
+1. we see that "pointers" in C are simplt address. Dereferencing a pointer involves copying that pointer into a register, and then using this register in a memory reference.
+2. local variables such as x are often kept in registers rather than stored in memory locations.
+
+### 3.4.4 pushing and poping stack data
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/stack_instruction.png "stack_instruction")
+The stack grows downward such that the top element of the stack has the lowest address of all stack elements.
+
+    pushq %rbp
+    subq $8, %rbp
+    movq %rbp, (%rsp)
+
+    popq %rax
+    movq (%rax)
+    addq $8, %rsp
+
+## 3.5 Arithmetic and Logical operations
+Most of the operations are given as instruction classes.
+The ops are divided into four groups :
+
+ 1. load effective address
+ 2. unary
+ 3. binaty
+ 4. shifts
+ 
+### 3.5.1 Load Effective Address
+leaq has the form of an instruction that reads from memory to a register, but it does not reference memory. Its first operand appears to be a memory reference. The instruction copies the effective address to the destination.
+
+### 3.5.2 unary and binary operations
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/arithmetic_instructions.png "arithmetic_instructions")
+
+This single operand of unary operations : register or a memory location. (incq ++)
+
+Binary operations, the second operand is used as both a source and destination.(x -= y).
+ 
+ * First operand : immediate value, register or memory location
+ * Second : register or a memory location
+
+### 3.5.3 shift operations
+The different shift instructions can specify the shift amount either as an immediate value or with the single-byte register %cl.
+With x86-64, a shift instruction operating on data values that are w bits long determines the shift amount from the low-order m bits of register %cl, where 2^m = w.
+
+>%cl=0xFF, salb m=3, 7; salw m=4, 15;
+
+### 3.5.4 discussion
+### 3.5.5 special arithmetic operations
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/special_arithmetic.png  "special_arithmetic")
+
+The assembler can tell which one is intended by counting the number of operands.
+
+##3.6 Control
+conditionals, loops, switches
+
+1. Two ways of implementing conditional operations(conditional control and conditional move)
+2. loops and switch statement
+
+### 3.6.1 Conditional Codes
+**Single-bit condition code registers**:
+
+1. CF(Carry flag), the most recent operation generated a carry out of the most significant bit. Used to detect overflow for unsigned ops.
+2. ZF(Zero flag), the most recent operation yield zero.
+3. SF(sign flag), the most recent operation yield a negative value
+4. DF(overflow flag), most recent operation cause a two's-complement overflow-either negative or postive.
+
+**condition code examples**:
+
+Suppose t = a + b, where a,b,t are integers, 
+CF (unsigned) t < (unsigned) a  Unsigned overflow
+ZF (t == 0)                     zero  
+SF (t < 0)                      negative
+OF (a<O==b<O) && (t<O !=a<O)    signed overflow
+
+
+**instructions' effect to condition code**:
+
+1. leaq does not alter any codition codes.
+2. all of the instructions listed in 3.10 cause the condition codes to be set.
+3. logical ops such as XOR, the carry and overflow flags are set to zero
+4. shift ops, the carry flag is set to the last bit shifted out, overflow flag is set to zero.
+5. INC and DEC set the overflow and zero flags, leaving the carry flag unchanged.
+
+**instruction classes that set condition codes without altering any other registers**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/condition_code.png "condition_codes")
+
+1. The CMP instructions behave in the same way as the SUB instructions, except that they set the condition codes without updating their destinations. Set the zero flag if the two operands are equal.
+2. TEST instructions behave as AND instructions, except that they set the condition codes without updating their destinations.
+
+### 3.6.2 accessing the condition codes
 
 
 ## arithmetic operations
