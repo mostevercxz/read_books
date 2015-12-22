@@ -78,7 +78,10 @@ We see that the intel and ATT formats differ in the following ways:
  * The Intel code omits the size designation suffixes, We  see instruction push and mov instead of pushq
 and movq.
  * The Intel code omits the '%' character in front of register names, using rbx instead of %rbx.
- * The Intel code has a different way of describing locations in memory-for example, QWORD PTR [rbx] rathen than (%rbx)
+ * The Intel code has a different way of describing locations in 
+ * 
+ * 
+ * -for example, QWORD PTR [rbx] rathen than (%rbx)
  * Instructions With multiple operands list them in the reverse order. This can be very confusing when, switching between the two formats.
 
 ## 3.3 data formats
@@ -147,7 +150,7 @@ copy a smaller source value to a larger destination.
 The stack grows downward such that the top element of the stack has the lowest address of all stack elements.
 
     pushq %rbp
-    subq $8, %rbp
+    subq $8, %rsp
     movq %rbp, (%rsp)
 
     popq %rax
@@ -214,7 +217,9 @@ OF (a<O==b<O) && (t<O !=a<O)    signed overflow
 **instructions' effect to condition code**:
 
 1. leaq does not alter any codition codes.
-2. all of the instructions listed in 3.10 cause the condition codes to be set.
+2. all of the instructions listed in 
+3. 
+4. 0 cause the condition codes to be set.
 3. logical ops such as XOR, the carry and overflow flags are set to zero
 4. shift ops, the carry flag is set to the last bit shifted out, overflow flag is set to zero.
 5. INC and DEC set the overflow and zero flags, leaving the carry flag unchanged.
@@ -226,47 +231,499 @@ OF (a<O==b<O) && (t<O !=a<O)    signed overflow
 2. TEST instructions behave as AND instructions, except that they set the condition codes without updating their destinations.
 
 ### 3.6.2 accessing the condition codes
+There are 3 common ways of using the condition codes:
+
+1. we can set a single byte to 0 or 1 depending on some combination of the condition codes. (SET instructions. the suffixes for these instructions denote different conditions, not different operand sizes. "setl"-->"set less")
+2. we can conditionally jump to some other part of the program
+3. we can conditionally transfer data
+
+**SET instruction **:
+A SET instruction has either one of the low-order single-byte register elements, or a single-byte memory location as its destination, setting this byte to either 0 or 1.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/set_instruction.png "set_instruction")
+
+**Machine code does or does not distinguish between signed and unsigned values** :
+
+1. machine code mostly uses the same instructions for the two cases
+2. some circumstances require different instructions to handle signed and unsigned operations, such as using different versions of right shifts, division and multiplication instructions , and different combinations of condition codes.
+
+### 3.6.3 Jump instructions
+These jump destinations are generally indicated in assembly code by a *label*.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/jump_instruction.png "jump_instruction")
+
+The jmp jumps unconditionally:
+1. direct jump, where the jump target is encoded as part of the instruction, by giving a label as the jump target.
+2. indirect jump, where the jump target is read from a register or a memory location, using "*" followed by an operand specifier using one of the memory operand formats.(jump *%rax, jump *(%rax))
+
+The remaining jump instructions are conditional.
+
+### 3.6.4 Jump instruction encodings
+Most commonly used encodings for jumps are **PC relative**, which encodes the difference between the address of the target instruction and the address of the instruction immediately following the jump. The value of the program counter when performing PC-relative addressing is **the address of the instruction following the jump, not that of the jump itself.**
+
+**What do the instructions rep and repz do?**:
+1. It is normally used to implement a repeating string operation.
+2. rep followed by ret to avoid making the the ret instruction the destination of a conditional jump instruction.
+
+### 3.6.5 Implementing conditional branches with conditional control
+
+**General form assemblt implementation**:
+
+    if (test-expr)
+      then-statement
+    else
+      else-statement
+
+Assembly code:
+
+    t = test-expr;
+    if (!t)
+      goto false;
+    then-statement
+    goto done;
+    false:
+      else-statement
+    done:
+      statements
+    
+
+    t = test-expr;
+    if (t)
+      goto true;
+    else-statement;
+    goto done;
+    true:
+      then-statement;
+    done:
+      statements
 
 
-## arithmetic operations
-movb, movw, movl, movq
-movzbw, movzbl, movzq, movzwl, movzwq
-movsbw, movsbl, movesbq, movswl, moveswq, moveslq
+### 3.6.6 Implementing Conditional branches with Conditional Moves
+**Introduction**:
 
-pushq S
-popq D
+The conventional way to implement conditional operations is through a condition transfer of control, which can be very inefficient on modern processors. **An alter way is through a conditional transfer of data.**
 
-leaq S,D 
-INC D
-DEC D
-NEG D
-NOT D
+Transfer of data **computes both outcomes of a conditional operation and then selects one based on whether or not the condition holds**, making sense only in restricted cases which can be implemented by a simple conditional move instruction that is better matched to the performance characteristics of mordern processors.
 
-ADD S,D
-SUB S,D
-IMUL S,D
-XOR S,D
-OR S,D
-AND S,D
+**Why conditional data transfers can outperform** ?
+pipelining where an instruction is processed via a sequence of stages, each performing one small portion of the required operations (e.g., fetching the instruction from memory, determining the instruction type, reading from memory, performing an arithmetic operation, writing to memory, and updating the program counter).  This approach achieves high performance by overlapping the steps of the successive instructions, such as fetching one instruction while performing the arithmetic operations for a previous instruction.
 
-SAL k, D left shift
-SHL k, D left shift(same as SAL)
-SAR k, D arithmetic right shift
-SHR k, D logical right shift
+To do this requires being able to d**etermine the sequence of instructions** to be executed well ahead of time in order to keep the pipeline full of instructions to be executed.  Mispredicting a jump requires the processor discard much of the work it has already done.
 
-mulq
-imulq
-cqto
-idivq
-divq
+8 clock cycles per call when the branching pattern is easily predictable, and 17.50 clock cycles per call when the branching pattern is easily predictable.
 
-##3.6 control
-Condition codes:
+Assume the probability of misprediction is p, without misprediction is T(OK), mispredict penalty 罚款罚金处罚 is T(MP)
+T(avg)(p) = (1-p)T(OK)+p(T(OK) + T(MP))
+17.5 = 1/2 * 8 + 1/2 * (8 + T(MP)), T(MP)=19
 
+**Conditional move instructions**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/condition_move.png "condition_move")
+
+1. Source operand : register or memory, is copied to the destination only if the specified condition holds.
+2. destination operand : register
+
+The source and destination values can be 16,32,64 bits long. (Single byte conditional moves are not supported.)
+
+v = test-expr ? then-expr ? else-exptr;
+
+    conditional controld transfer:
+    if (!test-expr)
+      goto false;
+      v = then-expr;
+    goto done;
+    false:
+      v = else-expr;
+    done: 
+      statements;
+
+    conditional move :
+    v = then-expr;
+    ve = else-expr;
+    t = test-expr;
+    if (!t) v = ve;
+
+**Not all conditional expressions can be compiled using conditional moves.**:
+
+If one of those two expressions could possibly generate an error condition or a side effect, this could lead to invalid behavior(null pointer).
+
+**Using conditional moves also does not always improve code effiency**:
+
+then-expr or else-expr evaluation requires a significant computation. GCC only uses conditional moves when the two expressions can be computed very easily. It uses conditional control transfers even in many cases where the cost of branch misprediction would exceed even more complex computations.
+
+### 3.6.7 Loops
+C provides several looping constructs-namely, do-while, while, and for. No corresponding instructions exist in machine code. Instead, combinations of conditional tests and jumps are used to implement the effect of loops.
+
+#### 3.6.7.1 Do-while loops
+    do
+      body-statement
+      while (test-expr)
+    
+    loop:
+      body-statement
+      t = test-expr;
+      if (t)
+        goto loop;
+
+    long fact_do_goto(long n)
+    {
+      long result = 1;
+    loop:
+      result *= n;
+      n = n - 1;
+      if (n>1)
+        goto loop;
+      return result;
+    }
+    
+      movl $1, %eax
+    .L2:
+      imulq %rdi, %rax
+      subq  $1, %rdi
+      cmpq $1, %rdi
+      jg .L2
+      rep;  ret
+
+**Reverse engineering loops**:
+Look at how registers are initialized before the loop, updated and tested within the loop, and used after the loop. Be prepared for surprising transformations.
+
+#### 3.6.7.2 While loops
+The first translation method, which we refer to as **jump to middle**, performs the initial test by performing an unconditional jump to the test at the end of the loop.
+
+    while(test-expr)
+      body-statement
+    
+    goto test;
+    loop:
+      body-statement
+    test:
+      t = test-expr;
+      if (t)
+        goto loop;
+
+    long fact_while_jm_goto(long n)
+    {
+      long result = 1;
+      goto test;
+    loop:
+      result *= n;
+      n = n - 1;
+    test:
+      if (n > 1)
+        goto loop;
+      return result;
+    }
+
+The second translation method, which we refer to as **guarded do**, first transforms the code into a do-while loop by using a conditional branch to skip over the loop if the intial test fails.
+
+    t = test-expr;
+    if (!t)
+      goto done;
+    do
+      body-statement
+      while(test-expr);
+    done
+    
+    t = test-expr;
+    if (!t)
+      goto done;
+    loop:
+      body-statement
+      t = test-expr;
+      if (t)
+        goto loop;
+    done:
+
+    long fact_while_gd_goto(long n)
+    {
+      long result = 1;
+      if (n<=1)
+        goto done;
+    loop:
+      result *= n;
+      n = n - 1;
+      if (n != 1)
+        goto loop;
+    done:
+      return result;
+    }
+
+      cmpq $1, %rdi
+      jle .L1
+      movl $1, %eax
+    .L2:
+      imulq %rdi, %rax
+      subq $1, %rdi
+      cmpq $1, %rdi
+      jne .L2
+      rep; ret
+    .L1:
+      movl $1, %eax
+      ret
+
+#### 3.6.7.3 For Loops
+
+    for(init-expr; test-expr; update-expr)
+      body-statement
+
+The C language standard states (with one exception, continue, may cause dead loop) that the behavior of such a loop is identical to the following code using a while loop:
+
+    init-expr;
+    while(test-expr){
+      body-statement;
+      update-expr;
+    }
+
+    gcc -Og
+    init-expr;
+    goto test;
+    loop:
+      body-statement
+      update-expr
+    test:
+      t = test-expr;
+      if (t)
+      goto loop;
+
+    gcc -O1
+    init-expr;
+    t = test-expr;
+    if (!t)
+      goto done;
+    loop:
+      body-statement;
+      update-expr;
+      t = test-expr;
+      if (t)
+        goto loop
+    done:
+
+### 3.6.8 Switch statements
+A switch statement provides a multiway branching capability based on the value of an integer index. Switch statements allow an efficient implementation using a data
+structure called a jump table. A jump table is an array where entry i is the address of a code segment implementing the action the program should take when the switch index equals i. **The advantage of using a jump table over a long sequence of if-else statements is that the time taken to perform the switch is independent of the number of switch cases.** Jump tables are used when there are a number of cases and they span a smalle range of values.
+
+    static void *jt[7] = {
+      &&loc_A, &&loc_def, &&loc_B, 
+      &&loc_C, &&loc_D, &&loc_def, &&loc_D
+    }
+
+    jmp *.L4(,%rsi, 8)  goto *jt[index]
+
+
+
+The jump table is indicated by the following declarations:
+ 
+      .section .rodata
+      .align 8
+    .L4:
+      .quad .L3  case 100:loc_A
+      .quad .L8  case 101:loc_def
+      .quad .L5
+      .quad .L6
+      .quad .L7
+      .quad .L8
+      .quad .L7
+
+These declarations state that within the segment of the object-code file called .rodata(read-only data), there should be 7 "quad" words, where the value of each word is given by the instruction address associated with the indicated assembly-code labels(e.g. .L3). Lable .L4 marks the start of this allocation.
+
+## 3.7 Procedures(also called subroutine, a block of code that performs a single task, nowadays computer languages use functions not procedures)
+Procedures are a key abstraction in software. Procedures come in many guises in different programming languages--functions, methods, subroutines, handlers and so on--but they all share a general set of features.
+
+Suppose procedure P calls procedure Q, and Q then executes and returns back to P. These actions involve one or more of the following mechanisms:
+
+1. Passing control. PC must be set to the starting address of the code for Q upon entry, and then set to the instruction in P following the call to Q upon return.
+2. Passing data, P must be able to procide one or more parameters to Q, and Q must be able to return a value back to P.
+3. Allocating and deallocating memory. Q may need to allocate space for local variables and then free that storage before it returns.
+
+### 3.7.1 The Run-time stack
+A key feature of the procedure-calling mechanism of C, and of most other languages,is that it can make use of the **last-in, first-out memory management discipline** provided by a **stack data structure**.
+
+The x86-64 stack **grows toward lower addresses and the stack pointer %rsp points to the top element of the stack**. Space for data with no specified initial value can be allocated on the stack by simply decrementing the stack pointer by an appropriate amount. Similarly, space can be deallocated by incrementing the stack pointer.
+
+
+The procedure's stack frame(Figure 3.25):
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/stack_frame.png "stack_frame")
+Procedure P can pass up to 6 integer values(pointers and registers) on the stack, but if Q requires more arguments, these can be stored by P within its stack frame prior to the call(Argument 7-Argument n, n>7).(3.10.5)
+
+Many procedures have six or fewer arguments, and so all of their parameters can be passed in registers. Many funcs do not even require a stack frame, which occurs when all of the local variables can be held in registers and the function does not call any other functions (sometimes referred to as a leaf procedure, in reference to the tree structure of procedure calls).
+
+### 3.7.2 Control transfer
+*call Q* instruction pushes an address A(return address) onto the stack and sets the PC to the beginning of Q. The counterpart instruction *ret* pops an address A off the stack and sets the PC to A.
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/call_ret.png "call_ret")
+A call can be either direct or indirect. The target of a direct call is given **as a label**, while the target of an indirect call is given by '*' followed by an operand specifier.
+
+The program counter %rip and the stack pointer %rsp.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/detailed_execute.png "detailed_execute")
+
+### 3.7.3 data transfer
+**Less than 6 arguments**:
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/register_passing_argument.png "register_passing_argument")
+
+**more than 6 arguments**:
+Assume P calls Q with n(n>6) arguments
+
+1. the code for P allocate a stack frame with enough storage for arguments 7 through n
+2. when passing parameters on the stack, all data sizes are rounded up to be multiples of eight
+3. Q can access its arguments via registers and possibly from the stack
+4. if Q calls some func that has more than 6 arguments, it can allocate space within its stack frame for these("Argument build area")
+
+### 3.7.4 Local storage on the stack
+At times, local data must be stored in memory:
+
+1. there are not enough registers to hold all of the local data
+2. address operator "&" is applied to a local variable
+3. Some of the local variables are arrays or structures and hence must be accessed by array or structure references.
+
+A procedure allocated space on the stack frame by decrementing the stack pointer, resulting in the portion of the stack frame labeled "Local variables" in figure 3.25.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/procedure_call.png "procedure_call")
+
+A more complex example:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/local_storage_complex.png "local_storage_complex") 
+
+### 3.7.5 local storage in registers
+We must make sure that when one procedure (**the caller**) calls another (**the callee**), the callee does not overwrite some register value that the caller planned to use later.
+
+By convention, **registers %rbx, %rbp, and %r12-%r15** are classified as ***callee saved*** registers. When procedure P calls procedure Q, Q must preserve the values of these registers, ensuring that they have the same values when Q returns to P as they did when Q was called. (Q can preserve a register value by either not changing it at all or by pushing the original register value on the stack,altering the register value, popping the old value from the stack before returning.) The pushing of register values has the effect of creating the portion of the stack frame labeled "Saved registers" in figure 3.25
+
+All other registers, except for %rsp, are classified as **caller saved** registers.
+
+An example:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/local_storage_register.png "local_storage_register")
+
+### 3.7.6 recursive procedures
+An example of factorial:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/recursive_procedure.png "recursive_procedure")
+
+## 3.8 Array allocation and access
+### 3.8.1 basic principles
+For data type T and integer constant N, consider a declaration of the form ***T A[N];*** Let us denote the starting location as x(A), the declaration has two effects:
+
+1. it allocates a contiguous region of sizeof(T)*N bytes in memory
+2. it introduces an identifier A that can be used as a pointer to the beginning of the array
+
+    int E[10];//the address of E is stored in register %rdx
+    movl (%rdx, %rcx, 4), %eax
+
+### 3.8.2 Pointer arithmetic
+If p is a pointer to data of type T, and the value of p is x(p), then the expression **p+i** has value **x(p) + L*i**,
+where L is the size of data type T.
+
+Suppose integer array E and integer index i are stored in %rdx and %rcx
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/pointer_arithmetic.png "pointer_arithmetic")
+
+### 3.8.3 nested arrays
+
+    int A[5][3]
+    typedef int row3_t[3];
+    row3_t A[5];
+
+Array elements are ordered in memory in row-major order, meaning all elements of row 0, which can be written A[0], followed by all elements of row 1(A[1]) and so on.
+
+For an array declared as T D[R][C], array element D[i][j] is at memory address:
+
+    &D[i][j] = x(D) + sizeof(T) * (C * i + j)  ------(3.1)
+
+Example, for int A[5][3], x(A),i,i are in registers %rdi, %rsi, %rdx, &A[i][j] = %rdi + 4 * (3i + j)
+
+    leaq (%rsi, %rsi, 2), %rax
+    leaq (%rdi, %rax, 4), %rax
+    movl (%rax, %rdx, 4), %eax
+
+### 3.8.4 Fixed-size Arrays
+We demonstrate some of **the optimizations for operating on multidimensional arrays of fixed size** made by gcc when the optimization level is set with the flag -01.
+
+    #define N 16
+    typedef int fix_matrix[N][N];
+    int fix_prod_ele(fix_matrix A, fix_matrix B, long i, long k)
+    {
+    }
+
+Clever optimations:
+
+1. generating a pointer, Aptr, which points to the successive elements in row i of A
+2. Bptr, which points to successive elements in column k of B
+3. Bend, which equals the value Bptr will have when it is time to terminate the loop.
+
+
+### 3.8.5 variable-size arrays
+1. the register usage changes due to added parameter n
+2. a multiply instruction is used to compute n*i
+
+    int val_ele(long n, int A[n][n], long i, long j){
+      return A[i][j];
+    }
+    
+    n %rdi, A %rsi, i %rdx, j %rcx
+    imulq %rdx, %rdi
+    leaq (%rsi, %rdi, 4), %rax
+    movl (%rax, %rcx, 4), %eax
+
+
+
+
+## 3.9 Heterogeneous Data Structures 异构数据
+C provides two mechanisms for creating data types by combining objects of different types : structures(aggregate multiple objs into a single unit), unions(allow an object to be referenced using several different types).
+
+### 3.9.1 Structures
+The selection of the different fields of a structure is handled **completely at compile time**. The machine code contains no infomation about the field declarations or the names of the fields.
+
+### 3.9.2 Unions
+Unions provide a way to circumvent the type system of C, allowing a single object to be referenced according to multiple types. The overall size of a union equals the maximum size of any of its fields.
+
+##3.10 Combing Control and Data in Machine-Level Programs
+### 3.10.1 Understanding Pointers
+Some key principles of pointers :
+
+1. Every pointer has an associated type. Pointer types are not part of machine code, they are an abstraction provided by C to help programmers avoid addressing errors.
+2. Every pointer has a value (NULL indicates that the pointer does not point anywhere)
+3. Pointers are created with the '&' operator. '&' can be applied to any C expression that is categorized as an lvalue,meaning an expression that can appear on the left side of an assignment.
+4. Pointers are dereferenced with the '*' operator.
+5. Arrays and pointers are closely related.
+6. Casting from one type of pointer to another changes its type but not its value.
+7. Pointers can also point to functions.
+
+### 3.10.2 Life in the real world : using the gdb debugger
+### 3.10.3 Out-of-bounds memory references and buffer overflow
+A more pernicious use of buffer overflow is to get a program to perform a function that it would otherwise be unwilling to do. The program is fed with a string that contains the byte encoding of some executable code, called the exploit code, plus some extra bytes that overwrite the return address with a pointer to the exploit code.
+
+The famous Internet worm of 1998 used four different ways to gain access to many of the computers across the Internet.
+
+### 3.10.4 Thwarting buffer overflow attacks
+#### 3.10.4.1 Stack randomization
+The idea of stack randomization is to make the position of the stack vary from one run of a program to another. This is implemented by allocating a random amount of space between 0 and n bytes on the stack at the start of a program.
+
+nop sled
+
+#### 3.10.4.2 Stacj Corruption Detection
+#### 3.10.4.3 Limit Executable Code Regions
+
+
+### 3.10.5 Supporting Variable-Size Stack Frames
+
+
+##Unknow words
 monotonicity 单调性
-penalty 罚款罚金处罚
+circumvent 包围陷害绕行逃避
+
+## Conclusion
+"movq $1, %rax" should be replced by "movl $1, %eax"
+
+typedef VS define:
+typedef obeys scoping rules just like variables, whereas define stays valid until the end of the file (or until a matching undef). something can be done with typedef that cannot be done with define
+
+    typedef int * int_p1;
+    int_p1 a,b,c;// a,b,c are all int pointers
+    #define int_p2 int*
+    int_p2 a,b,c //only a is a pointer
+    typedef int array10[10];
+    typedef int (*func_p)(int);
 
 ##Questions
 1. How mant bytes is each instructions compiled to in x86 ?
 2. How to write an assembly program and compile it ?
 3. the implementation of conditional moves in Chapter 4.
+4. What if the switch cases do not span a small range of values ?
+5. in recursive procedures, what's the limit size of the stack allocation ?
+6. MyStruct array[10]; what's the assembly-code?
+7. Why typedef int row3_t[3]; row3_t is an array of 3 integers? Who interpret row3_t ?
