@@ -671,6 +671,21 @@ The selection of the different fields of a structure is handled **completely at 
 ### 3.9.2 Unions
 Unions provide a way to circumvent the type system of C, allowing a single object to be referenced according to multiple types. The overall size of a union equals the maximum size of any of its fields.
 
+### 3.9.3 data alignment
+Many computer systems place restrictions on the allowable addresses for the primitive data types, requiring that the address fpr some objects must be a multiple of some value K (typically 2, 4, or 8). 
+
+The x86-64 hardware will work correctly regardless of the alignment of data. Intel recommends that data be aligned to improve memory system performance. Their alignment rule is based on the principle **that any primitive object of K bytes must have an address that is a multiple of K**.
+
+
+.align 8
+
+struct S2{int i; int j; char c;};
+
+if we pack S2 into 9 bytes, but
+
+    struct S2 array[4];//S2+9;S2+18
+
+
 ##3.10 Combing Control and Data in Machine-Level Programs
 ### 3.10.1 Understanding Pointers
 Some key principles of pointers :
@@ -681,25 +696,108 @@ Some key principles of pointers :
 4. Pointers are dereferenced with the '*' operator.
 5. Arrays and pointers are closely related.
 6. Casting from one type of pointer to another changes its type but not its value.
-7. Pointers can also point to functions.
+7. Pointers can also point to functions. The value of a function pointer is the address of the first instruction in the machine-code representation of the function.
 
 ### 3.10.2 Life in the real world : using the gdb debugger
+Some commands I did not use before:
+break *0x400540
+stepi    Execute one instruction
+stepi 4  Execute four instructions
+nexti
+
+disas
+disas func1
+disas 0x400540
+disas 0x400540, 0x400550
+
+info frame
+info registers
+
 ### 3.10.3 Out-of-bounds memory references and buffer overflow
 A more pernicious use of buffer overflow is to get a program to perform a function that it would otherwise be unwilling to do. The program is fed with a string that contains the byte encoding of some executable code, called the exploit code, plus some extra bytes that overwrite the return address with a pointer to the exploit code.
+
+    void echo()
+    {
+    char buf[8];//allocate 24 bytes, input 24-31 bytes, corrupt return address; 32+ bytes, corrupt saved state in caller
+    gets(buf);
+    puts(buf);
+    }
 
 The famous Internet worm of 1998 used four different ways to gain access to many of the computers across the Internet.
 
 ### 3.10.4 Thwarting buffer overflow attacks
 #### 3.10.4.1 Stack randomization
-The idea of stack randomization is to make the position of the stack vary from one run of a program to another. This is implemented by allocating a random amount of space between 0 and n bytes on the stack at the start of a program.
+The idea of stack randomization is to **make the position of the stack vary from one run of a program to another**. This is implemented by **allocating a random amount of space between 0 and n bytes on the stack at the start of a program**. The allocation range n needs to be large enough to get sufficient variations in the stack addresses, yet small enough that it does not waste too much space in the program.
 
-nop sled
+Stack randomization is one of a larger class of techniques known as address-space layout randomization, or ASLR. With ASLR, different parts of the program, including program
+code, library code, stack, global variables, and heap data, are loaded into different regions of memory each time a program is run.
 
-#### 3.10.4.2 Stacj Corruption Detection
+nop sled, if we set up a 256-byte nop sled, then the randomization over n=2^23 can be cracked by enumerating 2^15=32768 starting address. (Question, why?? 2^23 / 2^8=2^15)
+
+#### 3.10.4.2 Stack Corruption Detection
+The idea is to store a special canary value in the stack frame between any local buffer and the rest of the stack state. If canary has been altered, the program aborts with an error. gcc -fno-stack-protector
+
+**movq %fs:40, %rax**
+
+The instruction argument %fs:40 is an indication that the canary value is read from memory using segmented addressing, an addressing mechanism that dates back to the 80286 and is seldom found in.programs running on modern systems.
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/stack_protect.png "stack_protect")
+
 #### 3.10.4.3 Limit Executable Code Regions
-
+More recently, AMD introduced an NX (for "no-execute") bit into the memory protection for its 64-bit processors, separating the read and execute access modes, and Intel followed suit. With this feature, the stack can be marked as being readable and writable, but not executable, and the checking of whether a page is executable is performed in hardware, with no penalty in efficiency.
 
 ### 3.10.5 Supporting Variable-Size Stack Frames
+alloca, or variable-size array can allocate an arbitrary number of bytes of storage on the stack. The compiler cannot determine how much space it must allocate for the function's stack frame.
+
+To manager a variable-size stack frame, x86-64 code uses %rbp to server as a frame pointer(sometimes referred to a base pointer).
+
+##3.11 Floating-Point Code
+1. How floating-point values are stored and accessed.
+2. the instructions that operate on floating-point data
+3. the conventions used for passing floating-point values as arguments to funcs and for returning them as results.
+4. the conventions for how registers are preserved during function calls(i.e. caller saved, callee saved)
+
+### 3.11.1 Floating-point movement and conversion operations
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_register.png "float_register")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_movement.png "float_movement")
+
+The data are held either in memory(M(32) and M(64)), or in XMM registers (shown in the table as X). For transferring data between two XMM registers, it uses
+ 
+ 1. vmovaps for single-precision (a is for 'aligned')
+ 2. vmovapd for double-precision
+
+**Conversion instructions**:
+Convert from float read from (XMM register or memory) to a general-purpose register (perform truncation, rounding values toward zero)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/two_operand_float.png "two_operand_float")
+
+Convert from integer to floating point, first operand is read from memory or from a general-purpose register,  second operand only affects the upper bytes of the result, destination must be an XMM register.(vcvtsi2sdq %rax, %xmm1, %xmm1 reads a long integer from %rax, converts it to data type double, and stores the result in the lower bytes of XMM %xmm1,16-bytes)
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/three_operand_float.png "three_operand_float")
+
+
+Converting from float --> double, Suppose the low-order 4 bytes of %xmm0 hold a single-precision value, it seems straightforward to use the instruction : vcvtss2sd %xmm0, %xmm0, %xmm0
+
+vunpcklps %xmm0, %xmm0, %xmm0 //Replicate first vector element
+vcvtps2pd %xmm0, %xmm0 //Convert two vector elements to double
+
+* The vunpcklps is used to interleave the values in two XMM registers and store them in a third. [s3, s2, s1, s0] [d3, d2, d1, d0] then the destination register will be [s1, d1, s0, d0].
+* The vcvtps2pd expands the two low-order single-precision values in the source XMM register to be the two double-precision values in the destination XMM register.
+
+Convert from double --> float, Suppose %xmm0 holds two double [x1, x0] 
+
+vmovddup %xmm0, %xmm0 //replicate first vector element
+vcvtpd2psx %xmm0, %xmm0 //convert two vector elements to single
+
+* vmovddup will set %xmm0 to [x0, x0]
+* vcvtpd2psx convert these values to single precision, pack them into the low-order half of the register, and set the upper half to 0, [0.0, 0.0, x0, x0]
+
+
+### 3.11.2 Floating-Point code in procedures
+1. Up to eight floating-point arguments can be passed in XMM registers %xmm0-%xmm7.
+2. A function that returns a floating-point value does so in register %xmm0.
+3. All XMM registers are caller saved. The callee may overwrite any of these registers without first saving it.
+
+### 3.11.3 Floating-Point Arithmetic Operations
 
 
 ##Unknow words
@@ -727,3 +825,6 @@ typedef obeys scoping rules just like variables, whereas define stays valid unti
 5. in recursive procedures, what's the limit size of the stack allocation ?
 6. MyStruct array[10]; what's the assembly-code?
 7. Why typedef int row3_t[3]; row3_t is an array of 3 integers? Who interpret row3_t ?
+8. What's the purpose of the LEA instruction?
+ * For example, int array[10]; int *p = &array[4];//leaq (%rdi, 4, 4), %rax
+9. 

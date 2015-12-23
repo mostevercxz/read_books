@@ -439,16 +439,79 @@ sp->next = sp;
     {
       long ret = 0;
       while(ptr){
-      ret += ptr->v;
-      ptr = ptr->p;
+        ret += ptr->v;
+        ptr = ptr->p;
       }
     }
 
 Linked List.
 
 ##3.43
-up->t1.v
-&up->t1.w
-up->t2.a
-up->t2.a[up->t1.u]
+    up->t1.v short movw 8(%rdi), %ax; movl %eax, (%rsi)
+
+    mine is "leaq 10(%rdi), %rax; movq %rax, (%rsi)"  
+    &up->t1.w char* addq $10, %rdi; movq %rdi, (%rsi)
+
+    mine is "int* leaq (%rdi), %rax; movq %rax, (%rsi)"
+    up->t2.a int *  movq %rdi, (%rsi)
+
+up->t2.a[up->t1.u] int 
+movq (%rdi), %rax
+movl (%rdi, %rax, 4), %eax
+movl %eax, (%rsi)  
+
+ 
 *up->t2.p
+precedence : 
+++ --
+type() type{}
+()
+[]
+. ->
+*
+&
+
+char
+movq 8(%rdi), %rax------mine is leaq 8(%rdi), %rax, totally wrong
+movb (%rax), %al
+movb %al, (%rsi)
+
+## 3.44
+16, 4
+16, 8
+10, 2
+40, 8
+40, 8, just use the rule that any primitive object of K bytes must have an address that is a multiple of K.
+
+##3.45
+56 bytes
+
+double c, long g, char * a
+float e, int h
+short b, char d, char f
+
+char d;
+char f;
+short b;
+int h;
+float e;
+double c;
+long g;
+char *a;
+40 bytes total
+
+##3.46
+E. should 
+    malloc(strlen(buf)+1);
+    check whether the return value of malloc is NULL
+
+##3.47
+2^13
+2^13/2^7=2^6=64
+
+##3.48
+local variable v is closer to the top of the stack than buf. so corrupted stack will not affect v.
+
+##3.49
+Finally, I understand the question.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/solution349.png "solution349")
