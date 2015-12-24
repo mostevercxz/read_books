@@ -775,7 +775,7 @@ Convert from integer to floating point, first operand is read from memory or fro
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/three_operand_float.png "three_operand_float")
 
 
-Converting from float --> double, Suppose the low-order 4 bytes of %xmm0 hold a single-precision value, it seems straightforward to use the instruction : vcvtss2sd %xmm0, %xmm0, %xmm0
+**Converting from float --> double**, Suppose the low-order 4 bytes of %xmm0 hold a single-precision value, it seems straightforward to use the instruction : vcvtss2sd %xmm0, %xmm0, %xmm0
 
 vunpcklps %xmm0, %xmm0, %xmm0 //Replicate first vector element
 vcvtps2pd %xmm0, %xmm0 //Convert two vector elements to double
@@ -783,7 +783,7 @@ vcvtps2pd %xmm0, %xmm0 //Convert two vector elements to double
 * The vunpcklps is used to interleave the values in two XMM registers and store them in a third. [s3, s2, s1, s0] [d3, d2, d1, d0] then the destination register will be [s1, d1, s0, d0].
 * The vcvtps2pd expands the two low-order single-precision values in the source XMM register to be the two double-precision values in the destination XMM register.
 
-Convert from double --> float, Suppose %xmm0 holds two double [x1, x0] 
+**Convert from double --> float**, Suppose %xmm0 holds two double [x1, x0] 
 
 vmovddup %xmm0, %xmm0 //replicate first vector element
 vcvtpd2psx %xmm0, %xmm0 //convert two vector elements to single
@@ -798,7 +798,24 @@ vcvtpd2psx %xmm0, %xmm0 //convert two vector elements to single
 3. All XMM registers are caller saved. The callee may overwrite any of these registers without first saving it.
 
 ### 3.11.3 Floating-Point Arithmetic Operations
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_arithmetic.png "float_arithmetic")
 
+Each has either one(S1) or two(S1,S2) source operands and a destination operand D. S1 can be either an XMM register or a memory location. S2 and D must be XMM registers. Each operation has an instruction for single precision and an instruction for double precision.
+
+### 3.11.4 Defining and Usign Floating-point constants
+The compiler must allocate and initialize storage for any constant values.
+
+### 3.11.5 Using bitwise operations in floating-point code
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_bitwise.png "float_bitwise")
+
+### 3.11.6 Floating-Point Comparison Operations
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_comparision.png "float_comparision")
+Argument S2 must be in an XMM register, while s1 can be either in an XMM register or in memory.
+
+The floating-point comparison instructions set three condition codes : the zero flag ZF, the carry flag CF, and the parity flag PF. PF is set to a value where the least significant byte has even parify (i.e. an even number of ones in the byte). By convention, any comparison in C is considered to fail when one of the arguments is NaN, and this flag is used to detect such a condition. For example, even the comparison x == x yields 0 when x is NaN.
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/float_conditioncode.png "float_conditioncode")
+
+The unordered case occurs when either operand is NaN. jp(jump on parity) is used to conditionally jump when a floating-point comparison yields an unordered result. ZF is set when two operands are equal, CF is set when S2<S1.
 
 ##Unknow words
 monotonicity 单调性

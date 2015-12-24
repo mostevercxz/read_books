@@ -515,3 +515,96 @@ local variable v is closer to the top of the stack than buf. so corrupted stack 
 ##3.49
 Finally, I understand the question.
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/solution349.png "solution349")
+
+##3.50
+val1 = d
+val2 = i
+val3 = l
+val4 = f
+
+##3.51
+dest_t cvt(src_t x)
+{
+  dest_t y = (dest_t)x;
+  return y;
+}
+
+x is either in %xmm0 or in %rdi,%edi
+one or more instructions are to be used to perform the type conversion and to copy the value to the %rax, %xmm0
+
+T(x)   T(y) instructions
+long   double vcvtsi2sdq %rdi, %xmm0
+double int    vcvtsd2si %xmm0, %eax
+double float  vmovddup %xmm0, %xmm0; vcvtpd2psx %xmm0, %xmm0
+long   float  vcvtsi2ssq %rdi, %xmm0, %xmm0
+float  long   vcvtss2siq %xmm0, %rax
+
+##3.52
+a in %xmm0, b in %rdi, c in %xmm1, d in %esi
+a in %edi, b in %rsi, c in %rdx, d in %rcx
+a in %rdi, b in %xmm0, c in %esi, d in %xmm1
+a in %xmm0, b in %rdi, c in %xmm1, d in %xmm2
+
+##3.53
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/problem353.png "problem353")
+%xmm0 is float
+%rsi is long
+%edi is int
+%xmm1 is double
+
+%rsi -> %xmm2, long->float
+%xmm0 = %xmm0 + %xmm2, float + float
+%edi -> %xmm2, int -> float
+%xmm0 = %xmm2 / %xmm0, float / float
+%xmm0 -> double, float->double
+%xmm0 = %xmm0 - %xmm1, double - double
+
+p/(q+r) is float
+s is double
+line2-line5,  q and r(long, float), p is int
+
+p=int,q=long, r=float, s=double
+p=int,q=float, r=long, s=double
+
+##3.54
+line2:int x->float, (float)x
+line3:float * float->%xmm1, y=x*y
+line4-5: float %xmm1->double%xmm2
+line6: long -> double, (double)z
+line7:%xmm0/%xmm1, 
+return x*y-w/z;
+
+##3.55
+M=1+f=1
+E=(2^10+4-(2^10-1))=5
+M*2^E=1*2^5=32
+
+##3.56
+fabs(x)
+0*(x)
+-(x)
+
+## 3.57
+double funct3(int *ap, double b, long c, float *dp)
+{
+%xmm1=(float)*dp
+%xmm2=(double)*ap
+b-(double)*ap<=0
+%xmm0 = (float)c
+%xmm1 = (float)c * *dp
+return 
+.L8
+%xmm1 = %xmm1 + %xmm1
+%xmm0 = (float)c
+%xmm0 = (float)c + *dp * 2;
+return double(c+*dp*2);
+}
+
+if (b - *ap <=0)
+{
+return c+*dp*2;
+}
+else
+{
+return *dp * c;
+}
