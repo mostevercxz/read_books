@@ -149,3 +149,29 @@ the original value
 the value read from memory
 
 mrmovq (%rsp), %rsp
+
+## 4.9
+bool xor = (a && !b) || (!a && b)
+
+complements of each other.
+
+## 4.10
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/4/word_xor.png "word_xor")
+
+
+## 4.11
+word min3 = [
+  A <= B && A <= C : A;
+  B <= C : B;
+  1 : C;
+]
+
+## 4.12
+word median3 = [
+  A <= B && B <= C : B;
+  C <= B && B <= A : B;
+  B <= A && A <= C : A;
+  C <= A && A <= B : A;
+  1 : C;
+]
+
