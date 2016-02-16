@@ -523,7 +523,10 @@ The jump table is indicated by the following declarations:
 
 These declarations state that within the segment of the object-code file called .rodata(read-only data), there should be 7 "quad" words, where the value of each word is given by the instruction address associated with the indicated assembly-code labels(e.g. .L3). Lable .L4 marks the start of this allocation.
 
-## 3.7 Procedures(also called subroutine, a block of code that performs a single task, nowadays computer languages use functions not procedures)
+## 3.7 Procedures
+
+Procedures(also called subroutine, a block of code that performs a single task, nowadays computer languages use functions not procedures)
+
 Procedures are a key abstraction in software. Procedures come in many guises in different programming languages--functions, methods, subroutines, handlers and so on--but they all share a general set of features.
 
 Suppose procedure P calls procedure Q, and Q then executes and returns back to P. These actions involve one or more of the following mechanisms:
@@ -550,7 +553,7 @@ Many procedures have six or fewer arguments, and so all of their parameters can 
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/call_ret.png "call_ret")
 A call can be either direct or indirect. The target of a direct call is given **as a label**, while the target of an indirect call is given by '*' followed by an operand specifier.
 
-The program counter %rip and the stack pointer %rsp.
+The program counter %rip and the stack pointer %rsp.(Note: the comment should be "L1:y+2")
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/3/detailed_execute.png "detailed_execute")
 
 ### 3.7.3 data transfer
