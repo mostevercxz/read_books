@@ -477,3 +477,12 @@ Surveying SEQ
 The only problem with SEQ is that it is too slow.
 
 ## 4.4 General Principles of Pipelining
+### 4.4.1 Computational Pipelines
+### 4.4.2 A detailed look at Pipeline operation
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/4/pipeline_operation.png "pipeline_operation")
+### 4.4.3 Limitations of Pipelining
+### 4.4.4 Pipelining a system with feedback
+
+
+## 4.5 Pipelined Y86-64 implementations
+### 4.5.1 SEQ + : Rearranging the Computation Stages
