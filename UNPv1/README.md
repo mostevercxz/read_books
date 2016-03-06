@@ -4,7 +4,31 @@ Questions:
 2. Additional tips on writing secure network programs are found in Chapter 23 of [Garfinkel, Schwartz, and Spafford 2003]. How to write secure network programs?
 3. If we want to be certain that a datagram reaches its destination, we can build lots of features into our application: acknowledgments from the other end, timeouts, retransmissions, and the like. How to make sure a datagram reaches its destination?
 4. After a full-duplex connection is established, it can be turned into a simplex connection if desired (see Section 6.6). How to do it?
-5. TIME_WAIT State, To allow old duplicate segments to expire in the network, how to understand this?
+5. TIME_WAIT State, To allow old duplicate segments to expire in the network, how to understand this?  for a packet in one direction to be lost, and another MSL seconds for the reply to be lost, what does that mean? (至今还不解。。SO上的回答也不解，W. Richard Stevens is dead.. reply to be lost应该指的是使最后的ACK失效的时间, packet in one direction to be lost应该指的是server发过来的FIN消失的时间)
+6. What's going on if the last ACK nerver received? The passive closer will retransmit the FIN segment, just like any other
+segment that doesn't get ACKed. If the other end never ACKs it,and the 2MSL timer passes, the other end should then respond with RST. If it doesn't respond at all (maybe the other end has crashed), eventually the retransmit timer will be reached and the connection will be aborted.
+7. how many times tcp retransmits? windows(TcpMaxDataRetransmissions), linux(man tcp, tcp_retries1, 3 tcp_retries2, 15, RTO, ss -i)
+8. How to calculate RTO? ss -i [BLOG](http://sgros.blogspot.jp/2012/02/calculating-tcp-rto.html)
+
+[TCP/IP illustrated volume 1](http://www.pcvr.nl/tcpip/)
+
+Answers:
+[2.7 Please explain the TIME_WAIT state.](http://www.softlab.ntua.gr/facilities/documentation/unix/unix-socket-faq/unix-socket-faq-2.html)
+
+[time_wait's effect](http://www.isi.edu/~faber/pubs/time_wait.pdf)
+
+It must wait a reasonable amount of time to see whether the FIN segment from Program B is retransmitted, indicating that Program B never received the final ACK segment from Program A. In that case, Program A must be able to retransmit the final ACK segment. The Program A socket cannot be freed until this time period has elapsed. The time period is defined as twice the maximum segment life time, normally in the range of 1 to 4 minutes, depending on the TCP implementation.
+
+**When TCP sends a group of segments, it normally sets a single retransmission timer**, waiting for the other end to acknowledge reception. TCP does not set a different retransmission timer for every segment. Rather, it sets a timer when it sends a window of data and updates the timeout as ACKs arrive. **If an acknowledgment is not received in time, a segment is retransmitted.**
+
+Given the MSL value for an implementation, the rule is: When TCP performs an active close and sends the final ACK, that connection must stay in the TIME_ WAIT state for twice the MSL. **This lets TCP resend the final ACK in case it is lost.**
+The final ACK is resent not because the TCP retransmits ACKs (they do not consume sequence numbers and are not retransmitted by TCP), but **because the other side will retransmit its FIN (which does consume a sequence number)**. Indeed, TCP will always retransmit FINs until it receives a final ACK.
+
+**For a packet in one direction to be lost, and another MSL seconds for the reply to be lost.**
+
+TIME_WAIT State, I also have the same question about this. I thought of an assumption.
+In extreme senario, suppose the last ACK from client end spends MSL to reach server end. At this point, the end point thinks that this ACK has already perished due to MSL timeout. So server end retransmit the FIN imediately. In order to assure this FIN can reach client end (or if not, we have to assure its perishment), we must have another MSL. 	
+**The server waits for RTO(retransmission timeout), other than MSL to retransmit the FIN, right?** I think the server doesn't care anything about MSL, all it would do is retransmitting FIN until an ACK arrives or FIN retries exceed
 
 Acknowledges:
 
@@ -316,11 +340,13 @@ TCP options
 TCP connection termination
 
 1. One application calls close first, and we say that this end performs the active close. This end's TCP sends a FIN segment, which means it is finished sending data.
-2. The other end that receives the FIN performs the **passive close**. The received FIN is acknowledged by TCP. **The receipt of the FIN is also passed to the application as an end-of-file (after any data that may have already been queued for the application to receive)**, since the receipt of the FIN means the application will not receive any additional data on the connection.
+2. The other end that receives the FIN performs the **passive close**. The received FIN is acknowledged by TCP. **The receipt of the FIN is also passed to the application as an end-of-file (after any data that may have already been queued for the application to receive)**, since the receipt(收到) of the FIN means the application will not receive any additional data on the connection.
 3. Sometime later, the application that received the end-of-file will close its socket. This causes its TCP to send a FIN.
 4. The TCP on the system that receives this final FIN (the end that did the active close) acknowledges the FIN.
 
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/tcp_termination.gif "tcp_termination")
+
+Since a FIN and an ACK are required in each direction, four segments are normally required. We use the qualifier "normally" because in some scenarios, the FIN in Step 1 is sent with data. Also, the segments in Steps 2 and 3 are both from the end performing the passive close and could be combined into one segment.
 
 A FIN occupies one byte of sequence number space just like a SYN. Therefore, the ACK of each FIN is the sequence number of the FIN plus one.
 
@@ -370,7 +396,7 @@ There are two reasons for the TIME_WAIT state:
 1. To implement TCP's full-duplex connection termination reliably
 2. To allow old duplicate segments to expire in the network
 
-Looking at Figure 2.5 and assuming that the final ACK is lost. The server will resend its final FIN, so the client must maintain state information, allowing it to resend the final ACK. This example also shows why the end that performs the active close is the end that remains in the TIME_WAIT state: because that end is the one that might have to retransmit the final ACK.
+Looking at Figure 2.5 and assuming that the final ACK is lost. The server will resend its final FIN, so the client must maintain state information, allowing it to resend the final ACK. If it did not maintain this information, it would respond with an RST (a different type of TCP segment), which would be interpreted by the server as an error. If TCP is performing all the work necessary to terminate both directions of data flow cleanly for a connection (its full-duplex close), then it must correctly handle the loss of any of these four segments. This example also shows why the end that performs the active close is the end that remains in the TIME_WAIT state: because that end is the one that might have to retransmit the final ACK.
 
 Establish another connection with same ip and port. **This latter connection is called an incarnation(化身) of the previous connection** since the IP addresses and ports are the same. TCP must prevent old duplicates from a connection from reappearing at some later time and being misinterpreted as belonging to a new incarnation of the same connection. To do this, **TCP will not initiate a new incarnation of a connection that is currently in the TIME_WAIT state**. Since the duration of the TIME_WAIT state is twice the MSL, **this allows MSL seconds for a packet in one direction to be lost, and another MSL seconds for the reply to be lost**. By enforcing this rule, we are guaranteed that when we successfully establish a TCP connection, all old duplicates from previous incarnations of the connection have expired in the network.
 
