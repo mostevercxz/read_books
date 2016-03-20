@@ -1,3 +1,6 @@
+Ignored chapters:
+2.8 SCTP
+
 Questions:
 
 1. It is remarkable how many network break-ins have occurred by a hacker sending data to cause a server's call to sprintf to overflow its buffer. How to do this?
@@ -38,6 +41,9 @@ Acknowledges:
 4. Application Programming Interfaces (APIs)
 5. Computer Systems Research Group (CSRG)
 6. Internet Engineering Task Force (IETF)
+7. IPV4 header
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/ipv4.gif "ipv4")
 
 # Chapter 1, introduction
 A protocol, an agreement on how those programs will communicate. Before delving into the design details of a protocol, high-level decisions must be made about which program is expected to initiate communication and when responses are expected.
@@ -49,6 +55,7 @@ Routers are the building blocks of WANs. The largest WAN today is the Internet.
 
 ## 1.2 a simple daytime application
 
+	// Redhat 6.4
     /usr/include/bits/sockaddr.h
     typedef unsigned short int sa_family_t;
     #define __SOCKADDR_COMMON(sa_prefix) \
@@ -80,6 +87,20 @@ Routers are the building blocks of WANs. The largest WAN today is the Internet.
     	sizeof(in_port_t) -
     	sizeof(struct in_addr)];//16 - 2 - 2 - 4 = 8
     };
+
+	struct in6_addr{
+		union{
+			uint8_t __u6_addr8[16];
+		} __in6_u;
+	};
+
+	struct sockaddr_in6{
+		__SOCKADDR_COMMON (sin6_);
+		in_port_t sin6_port;
+		uint32_t sin6_flowwinfo;// IPv6 flow infomation
+		struct in6_addr sin6_addr;
+		uint32_t sin6_scope_id;//IPv6 scope-id
+	};
 
 	/usr/include/bits/types.h
 	#define __U32_TYPE unsigned int
@@ -405,3 +426,445 @@ Establish another connection with same ip and port. **This latter connection is 
 *(There is an exception to this rule. Berkeley-derived implementations will initiate a new incarnation of a connection that is currently in the TIME_WAIT state** if the arriving SYN has a sequence number that is "greater than" the ending sequence number from the previous incarnation**. Pages 958–959 of TCPv2 talk about this in more detail. This requires the server to perform the active close, since the TIME_WAIT state must exist on the end that receives the next SYN. This capability is used by the rsh command. RFC 1185 [Jacobson, Braden, and Zhang 1990] talks about some pitfalls in doing this.)*
 
 ## 2.8 SCTP Association Establishment and Termination
+---
+Four-way handshake
+
+1. **server passive open**(socket, bind, listen)
+2. The client **issues an active open** by calling connect or by sending a message, which implicitly opens the association. This causes the client SCTP to send an INIT message (which stands for "initialization") to tell the server the client's list of IP addresses, initial sequence number, initiation tag to identify all packets in this association, number of outbound streams the client is requesting, and number of inbound streams the client can support.
+3. The server acknowledges the client's INIT message with an INIT-ACK message, which contains the server's list of IP addresses, initial sequence number, initiation tag, number of outbound streams the server is requesting, number of inbound streams the server can support, and a state cookie. The state cookie contains all of the state that the server needs to ensure that the association is valid, and is digitally signed to ensure its validity.
+4. The client echos the server's state cookie with a COOKIE-ECHO message. This message may also contain user data bundled within the same packet.
+5. The server acknowledges that the cookie was correct and that the association was established with a COOKIE-ACK message. This message may also contain user data bundled within the same packet.
+
+**Figure 2.6. SCTP four-way handshake.**
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/sctp_handshake.gif "sctp handshake")
+
+---
+Association Termination
+
+SCTP State Transition Diagram
+
+Watching the Packets
+
+SCTP Options
+
+## 2.9 Port Numbers
+
+The port numbers are divided into 3 ranges:
+
+1. The well-known ports: 0 through 1023. These port numbers are controlled and assigned by the IANA.
+2. The registered ports: 1024 through 49151
+3. The dynamic or private ports, 49152 through 65535. The IANA says nothing about these ports. These are what we call ephemeral ports. (The magic number 49152 is three-fourths of 65536.)
+
+**Figure 2.10. Allocation of port numbers.**
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/port_allocation.gif "port allocation")
+
+Unix systems have the concept of a reserved port, which is any port less than 1024. These ports can only be assigned to a socket by an appropriately privileged process. All the IANA well-known ports are reserved ports; hence, the server allocating this port (such as the FTP server) must have superuser privileges when it starts.
+
+There are a few clients (not servers) that require a reserved port as part of the client/server authentication: the rlogin and rsh clients are common examples. These clients call the library function rresvport to create a TCP socket and assign an unused port in the range 513–1023 to the socket. This function normally tries to bind port 1023, and if that fails, it tries to bind 1022, and so on, until it either succeeds or fails on port 513.(man rresvport)
+
+**Socket Pair:**
+
+The socket pair for a TCP connection is the four-tuple that defines the two endpoints of the connection: the local IP address, local port, foreign IP address, and foreign port.
+
+A socket pair uniquely identifies every TCP connection on a network. For SCTP, an association is identified by a set of local IP addresses, a local port, a set of foreign IP addresses, and a foreign port.
+
+The two values that identify each endpoint, an IP address and a port number, are often called a socket.
+
+## 2.10 TCP Port Numbers and concurrent servers
+When we specify the local IP address as an asterisk, it is called the wildcard character.
+
+the server can specify that it wants only to accept incoming connections that arrive destined to one specific local interface. **This is a one-or-any choice for the server**. The server cannot specify a list of multiple addresses.
+
+Notice from this example that TCP cannot demultiplex incoming segments by looking at just the destination port number. TCP must look at all four elements in the socket pair to determine which endpoint receives an arriving segment.
+
+## 2.11 Buffer Sizes and Limitations
+
+Some limits:
+
+1. **The maximum size of an IPv4 datagram is 65,535 bytes**, including the IPv4 header.This is because of the 16-bit total length field in ipv4 header.
+2. **The maximum size of an IPv6 datagram is 65,575 bytes**, including the 40-byte IPv6 header. This is because of the 16-bit payload length field in ipv6 header. Notice that the IPv6 payload length field does not include the size of the IPv6 header, while the IPv4 total length field does include the header size.
+3. Many networks have an MTU which can be dictated by the hardware. For example, the Ethernet MTU is 1,500 bytes. Other datalinks, such as point-to-point links using the Point-to-Point Protocol (PPP), have a configurable MTU. Older SLIP links often used an MTU of 1,006 or 296 bytes. T**he minimum link MTU for IPv4 is 68 bytes. This permits a maximum-sized IPv4 header (20 bytes of fixed header, 30 bytes of options) and minimum-sized fragment (the fragment offset is in units of 8 bytes)**. The minimum link MTU for IPv6 is 1,280 bytes. IPv6 can run over links with a smaller MTU, but requires link-specific fragmentation and reassembly to make the link appear to have an MTU of at least 1,280 bytes.
+4. The smallest MTU in the path between two hosts is called the path MTU. Today, the Ethernet MTU of 1,500 bytes is often the path MTU. The path MTU need not be the same in both directions between any two hosts because routing in the Internet is often asymmetric [Paxson 1996]. That is, the route from A to B can differ from the route from B to A.
+5. When an IP datagram is to be sent out an interface, if the size of the datagram exceeds the link MTU, fragmentation is performed by both IPv4 and IPv6. The fragments are not normally reassembled until they reach the final destination. IPv4 hosts perform fragmentation on datagrams that they generate and IPv4 routers perform fragmentation on datagrams that they forward. But with IPv6, only hosts perform fragmentation on datagrams that they generate; IPv6 routers do not fragment datagrams that they are forwarding. (The IP datagrams generated by the router's Telnet server are generated by the router, not forwarded by the router.)
+6. If the "don't fragment" (DF) bit is set in the IPv4 header, it specifies that this datagram must not be fragmented, either by the sending host or by any router. A router that receives an IPv4 datagram with the DF bit set whose size exceeds the outgoing link's MTU generates an ICMPv4 "destination unreachable, fragmentation needed but DF bit set" error message. Since IPv6 routers do not perform fragmentation, there is an implied DF bit with every IPv6 datagram. When an IPv6 router receives a datagram whose size exceeds the outgoing link's MTU, it generates an ICMPv6 "packet too big" error message.(The IPv4 DF bit and its implied IPv6 counterpart can be used for path MTU discovery, while Path MTU discovery is problematic in the Internet today; many firewalls drop all ICMP messages, including the fragmentation required message)
+7. IPv4 and IPv6 define a minimum reassembly buffer size, the minimum datagram size that we are guaranteed any implementation must support.For IPv4, this is 576 bytes. IPv6 raises this to 1,500 bytes.
+8. TCP has a maximum segment size (MSS) that announces to the peer TCP the maximum amount of TCP data that the peer can send per segment. **The goal of the MSS is to tell the peer the actual value of the reassembly buffer size and to try to avoid fragmentation**. The MSS is often set to the interface MTU minus the fixed sizes of the IP and TCP headers. On an Ethernet using IPv4, this would be 1,460, and on an Ethernet using IPv6, this would be 1,440. (The TCP header is 20 bytes for both, but the IPv4 header is 20 bytes and the IPv6 header is 40 bytes.) The MSS value in the TCP MSS option is a 16-bit field, limiting the value to 65,535. This is fine for IPv4, since the maximum amount of TCP data in an IPv4 datagram is 65,495 (65,535 minus the 20-byte IPv4 header and minus the 20-byte TCP header).
+
+---
+TCP output
+**Figure 2.15. Steps and buffers involved when an application writes to a TCP socket.**
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/tcp_steps.gif "tcp steps")
+
+Every TCP socket has a send buffer and we can change the size of this buffer with the SO_SNDBUF socket option. Therefore, the successful return from a write to a TCP socket only tells us that we can reuse our application buffer. It does not tell us that either the peer TCP has received the data or that the peer application has received the data. (We will talk about this more with the SO_LINGER socket option in Section 7.5.)
+
+**TCP takes the data in the socket send buffer and sends it to the peer TCP based on all the rules of TCP data transmission** (Chapter 19 and 20 of TCPv1). The peer TCP must acknowledge the data, and as the ACKs arrive from the peer, only then can our TCP discard the acknowledged data from the socket send buffer. **TCP must keep a copy of our data until it is acknowledged by the peer.**
+
+TCP sends the data to IP in MSS-sized or smaller chunks, prepending its TCP header to each segment, where the MSS is the value announced by the peer, **or 536(576-20-20) if the peer did not send an MSS option**. IP prepends its header, searches the routing table for the destination IP address (the matching routing table entry specifies the outgoing interface), and passes the datagram to the appropriate datalink.
+
+---
+UDP output
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/udp_steps.gif "udp steps")
+
+This time, we show the socket send buffer as a dashed box because it doesn't really exist. A UDP socket has a send buffer size (which we can change with the SO_SNDBUF socket option, Section 7.5), but this is simply an upper limit on the maximum-sized UDP datagram that can be written to the socket. If an application writes a datagram larger than the socket send buffer size, EMSGSIZE is returned.
+
+## 2.12 Standard internet services
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/standard_services.gif "standard services")
+
+telnet baidu.com http
+
+These service names are mapped into the port numbers shown in Figure 2.18 by the /etc/services file.
+
+These "simple services" are often disabled by default on modern systems due to denial-of-service and other resource utilization attacks against them.
+
+## 2.13 Protocol Usage by Common Internet Applications
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/2/protocol_usage.gif "protocol usage")
+
+## 2.14 Summary
+TCP establishes connections using a three-way handshake and terminates connections using a four-packet exchange. When a TCP connection is established, it goes from the CLOSED state to the ESTABLISHED state, and when it is terminated, it goes back to the CLOSED state. There are 11 states in which a TCP connection can be, and a state transition diagram gives the rules on how to go between the states. Understanding this diagram is essential to diagnosing problems using the netstat command and understanding what happens when an application calls functions such as connect, accept, and close.
+
+TCP's TIME_WAIT state is a continual source of confusion with network programmers. This state exists to implement TCP's full-duplex connection termination (i.e., to handle the case of the final ACK being lost), and to allow old duplicate segments to expire in the network.
+
+## Exercies
+2.1 What about other IP versions ?
+
+    Decimal,Keyword,Version,Reference
+    0-1,,Reserved,[Jon_Postel][RFC4928]
+    2-3,,Unassigned,[Jon_Postel]
+    4,IP,Internet Protocol,[RFC791][Jon_Postel]
+    5,ST,ST Datagram Mode,[RFC1190][Jim_Forgie]
+    6,IPv6,Internet Protocol version 6,[RFC1752]
+    7,TP/IX,TP/IX: The Next Internet,[RFC1475]
+    8,PIP,The P Internet Protocol,[RFC1621]
+    9,TUBA,TUBA,[RFC1347]
+    10-14,,Unassigned,[Jon_Postel]
+    15,Reserved,[Jon_Postel]
+
+2.2 google IP version 5
+2.3 536 = 576 - 20 TCP headers - 20 IPv4 headers
+2.4 The server performs the active close.
+2.5 TCP cannot exceed the MSS announced by the other end, but it can always send less than this amount.
+2.6 (Wow, google...)The "Protocol Numbers" section of the Assigned Numbers Web page (http://www.iana.org/numbers.htm) shows a value of 89 for OSPF
+
+
+# Chapter 3, Sockets introduction
+## 3.2 Socket addresss structure
+Each supported protocol suite defines its own socket address structure. The names of these structures begin with sockaddr_ and end with a unique suffix for each protocol suite.
+
+1. The POSIX specification requires only three members in the structure: sin_family, sin_addr, and sin_port.Almost all implementations add the sin_zero member so that all socket address structures are at least 16 bytes in size.
+2. Even if the length field is present, we need never set it and need never examine it, unless we are dealing with routing sockets (Chapter 18). It is used within the kernel by the routines that deal with socket address structures from various protocol families. (The four socket functions that pass a socket address structure from the process to the kernel, bind, connect, sendto, and sendmsg, all go through the sockargs function in a Berkeley-derived implementation; The five socket functions that pass a socket address structure from the kernel to the process, accept, recvfrom, recvmsg, getpeername, and getsockname, all set the sin_len member before returning to the process)
+3. sa_family_t is normally an 8-bit unsigned integer if the implementation supports the length field, or **an unsigned 16-bit integer if the length field is not supported**(my ubuntu 15.04 is 16-bit)
+4. Both the IPv4 address and the TCP or UDP port number are always stored in the structure in network byte order.
+5. The reason the sin_addr member is a structure, and not just an in_addr_t, is historical. Earlier releases (4.2BSD) defined the in_addr structure as a union of various structures, to allow access to each of the 4 bytes and to both of the 16-bit values contained within the 32-bit IPv4 address.
+6. The sin_zero member is unused, but we always set it to 0 when filling in one of these structures. By convention, we always set the entire structure to 0 before filling it in, not just the sin_zero member.
+7. Socket address structures are used only on a given host: The structure itself is not communicated between different hosts, although certain fields (e.g., the IP address and port) are used for communication.
+
+Comparison of Socket address structures, see /usr/include/netinet/in.h linux/socket.h linux/un.h
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/3/comparison_structure.png "comparison")
+
+
+## 3.3 value-result arguments
+The reason that the size changes from an integer to be a pointer to an integer is because the size is both a value when the function is called (it tells the kernel the size of the structure so that the kernel does not write past the end of the structure when filling it in) and a result when the function returns (it tells the process how much information the kernel actually stored in the structure). This type of argument is called a value-result argument. 
+
+The most common value-result argument is :
+
+* the length of a returned socket address structure
+* The middle three arguments for the select function
+* The length argument for the getsockopt function
+* The msg_namelen and msg_controllen members of the msghdr structure, when used with recvmsg
+* The ifc_len member of the ifconf structure
+* The first of the two length arguments for the sysctl function
+
+code:
+
+    #include <sys/select.h>
+    #include <sys/time.h> 
+    int select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset, const struct timeval *timeout);
+	struct timeval {long tv_sec; long tv_usec;}
+
+There are three possibilities:
+
+1. Wait forever— Return only when one of the specified descriptors is ready for I/O. For this, we specify the timeout argument as a null pointer.
+2. Wait up to a fixed amount of time— Return when one of the specified descriptors is ready for I/O, but do not wait beyond the number of seconds and microseconds specified in the timeval structure pointed to by the timeout argument.
+3. Do not wait at all— Return immediately after checking the descriptors. This is called polling. To specify this, the timeout argument must point to a timeval structure and the timer value (the number of seconds and microseconds specified by the structure) must be 0.
+
+**The wait in the first two scenarios is normally interrupted if the process catches a signal and returns from the signal handler.**
+
+The three middle arguments, readset, writeset, and exceptset, specify the descriptors that we want the kernel to test for reading, writing, and exception conditions. **There are only two exception conditions currently supported**:
+
+1. The arrival of out-of-band data for a socket. We will describe this in more detail in Chapter 24.
+2. The presence of control status information to be read from the master side of a pseudo-terminal that has been put into packet mode. We do not talk about pseudo-terminals in this book.
+
+code:
+
+    <linux/posix_types.h>
+	#define __FD_SETSIZE 1024
+	<sys/select.h>
+    typedef long int __fd_mask;
+    #define _NFDBITS (8 * (int)sizeof(__fd_mask))
+	typedef struct
+	{
+		__fd_mask __fds_bits[__FD_SETSIZE / _NFDBITS];
+	}fd_set;
+
+## 3.4 byte-order functions
+MSB(most significant)
+LSB(least significant)
+little-endian: LSB comes first(at the starting address)
+
+Write a program to determine Big-or-Little Endian
+
+    union 
+    {
+      short s;
+      char c[sizeof(short)];
+    }un;
+    un.s = 0x0102;
+
+Host byte order <--> Network byte order
+But, both history and the POSIX specification say that certain fields in the socket address structures must be maintained in network byte order. So, we have to do it ourselves.
+
+    #include <netinet/in.h>
+     
+    uint16_t htons(uint16_t host16bitvalue) ;//host -> network short     
+    uint32_t htonl(uint32_t host32bitvalue) ;//host -> network long
+     
+    uint16_t ntohs(uint16_t net16bitvalue) ;
+    uint32_t ntohl(uint32_t net32bitvalue) ;
+ 
+We use the term "byte" to mean an 8-bit quantity since almost all current computer systems use 8-bit bytes. Most Internet standards use the term **octet** instead of **byte** to mean an 8-bit quantity. This started in the early days of TCP/IP because much of the early work was done on systems such as the DEC-10, which did not use 8-bit bytes.
+
+Another important convention in Internet standards is bit ordering. This represents four bytes in the order in which they appear on the wire; the leftmost bit is the most significant. However, **the numbering starts with zero assigned to the most significant bit(MSB 0)**.[Wikipedia, bit numbering.](https://en.wikipedia.org/wiki/Bit_numbering) (11110011 00110011, network)This is a notation that you should become familiar with to make it easier to read protocol definitions in RFCs.
+
+Little-endian uses LSB 0;big-endian uses both LSB 0 and MSB 0.
+
+LSB:
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/3/Lsb0.svg.png "LSB")
+
+MSB :
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/3/Msb0.svg.png "MSB")
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/3/bit_order_example.gif "bit order")
+
+## 3.5 Byte manipulation funcs
+There are two groups of functions that operate on multibyte fields, without interpreting the data, and without assuming that the data is a null-terminated C string. The functions beginning with str (for string), defined by including the <string.h> header, deal with null-terminated C character strings.
+
+The first group of functions, whose names begin with b (for byte), are from 4.2BSD and are still provided by almost any system that supports the socket functions.
+
+The second group of functions, whose names begin with mem (for memory), are from the ANSI C standard and are provided with any system that supports an ANSI C library.
+
+    #include <strings.h>
+     
+    void bzero(void *dest, size_t nbytes);     
+    void bcopy(const void *src, void *dest, size_t nbytes);//bcopy is not back, src --> dest
+    int bcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+ 
+    #include <string.h>
+     
+    void *memset(void *dest, int c, size_t len);     
+    void *memcpy(void *dest, const void *src, size_t nbytes);
+    int memcmp(const void *ptr1, const void *ptr2, size_t nbytes);
+ 
+*bcopy* correctly handles overlapping fields, while the behavior of *memcpy* is undefined if the source and destination overlap. The ANSI C memmove function must be used when the fields overlap.
+
+One way to remember the order of the two pointers for *memcpy* is to remember that they are written in the same left-to-right order as an assignment statement in C:
+
+dest = src;
+
+One way to remember the order of the final two arguments to *memset* is to realize that all of the ANSI C memXXX functions require a length argument, and it is always the final argument.
+
+*memcmp*, the comparison is done assuming the two unequal bytes are unsigned chars.
+
+## 3.6 funcs:
+`inet_aton, inet_addr, inet_ntoa`
+
+`inet_aton, inet_ntoa, inet_addr` convert an IPv4 address from a dotted-decimal string (e.g., "206.168.112.96") to its 32-bit network byte ordered binary value.
+
+`inet_pton and inet_ntop`, handle both IPv4 and IPv6 addresses.
+
+    #include <arpa/inet.h>
+     
+    int inet_aton(const char *strptr, struct in_addr *addrptr);//Returns: 1 if string was valid, 0 on error
+     
+    in_addr_t inet_addr(const char *strptr);//Deprecated, Returns: 32-bit binary network byte ordered IPv4 address; INADDR_NONE if error
+     
+    char *inet_ntoa(struct in_addr inaddr);//Do not use,Returns: pointer to dotted-decimal string
+
+The problem with *inet_addr* is that all 2^32 possible binary values are valid IP addresses (0.0.0.0 through 255.255.255.255), but the function returns the constant **INADDR_NONE** (typically 32 one-bits) on an error. This means the dotted-decimal string 255.255.255.255 (the IPv4 limited broadcast address, Section 20.2) cannot be handled by this function since its binary value appears to indicate failure of the function.
+ 
+## 3.7 funcs
+    inet_pton, inet_ntop
+
+The letters "p" and "n" stand for presentation and numeric. The presentation format for an address is often an ASCII string and the numeric format is the binary value that goes into a socket address structure
+
+    #include <arpa/inet.h>
+     
+    int inet_pton(int family, const char *strptr, void *addrptr);//Returns: 1 if OK, 0 if input not a valid presentation format, -1 on error
+     
+    const char *inet_ntop(int family, const void *addrptr, char *strptr, size_t len);//Returns: pointer to result if OK, NULL on error
+
+The family argument for both functions is either `AF_INET or AF_INET6`. If family is not supported, both functions return an error with errno set to EAFNOSUPPORT.
+
+    defined in the <netinet/in.h> :
+    #define INET_ADDRSTRLEN   16   /* for IPv4 dotted-decimal */
+    #define INET6_ADDRSTRLEN  46   /* for IPv6 hex string */
+
+If len is too small to hold the resulting presentation format, including the terminating null, **a null pointer is returned and errno is set to ENOSPC**.
+
+The *strptr* argument to **inet_ntop** cannot be a null pointer. The caller must allocate memory for the destination and specify its size. On success, this pointer is the return value of the function.
+
+    foo.sin_addr.s_addr = inet_addr(cp);
+     -->
+    inet_pton(AF_INET, cp, &foo.sin_addr);
+    
+    ptr = inet_ntoa(foo.sin_addr);
+     -->
+    char str[INET_ADDRSTRLEN];
+    ptr = inet_ntop(AF_INET, &foo.sin_addr, str, sizeof(str));
+
+    int
+    inet_pton(int family, const char *strptr, void *addrptr)
+    {
+    if (family == AF_INET) {
+    	struct in_addr in_val;
+    
+    	if (inet_aton(strptr, &in_val)) {
+    		memcpy(addrptr, &in_val, sizeof(struct in_addr));
+    		return (1);
+    	}
+    	return (0);
+    }
+    errno = EAFNOSUPPORT;
+    return (-1);
+    }
+
+
+    const char *
+    inet_ntop(int family, const void *addrptr, char *strptr, size_t len)
+    {
+    	const u_char *p = (const u_char *) addrptr;
+    
+    	if (family == AF_INET) {
+    		char temp[INET_ADDRSTRLEN];
+    
+    		snprintf(temp, sizeof(temp), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+    		if (strlen(temp) >= len) {
+    		errno = ENOSPC;
+    		return (NULL);
+    	}
+    	strcpy(strptr, temp);
+    	return (strptr);
+    	}
+    	errno = EAFNOSUPPORT;
+    	return (NULL);
+    }
+
+## 3.8 sock_ntop and related funcs
+
+Problem : 
+
+    const char * inet_ntop(family, const void *addrptr, char *strptr, size_t len)// need write struct sockaddr_in or sockaddr_in6, protocol-dependent
+
+    char * sock_ntop(const struct sockaddr *addr, socklen_t addrLen);//return non-null pointer if OK,NULL on error
+
+Notice that using static storage for the result prevents the function from being re-entrant or thread-safe. We made this design decision for this function to allow us to easily call it from the simple examples in the book.(I could use std::string)
+
+
+    // used to replace inet_ntop, skipping the step of declaring sockaddr structures
+    // currently used only in IPv4, IPv6
+	// 0 indicates no error,we can use the presentation string; -1 means error
+    int sock_ntop(const struct sockaddr *sa, socklen_t len, std::string &presentation)
+    {
+      char portBuffer[7]={0};
+      char buffer[35] = {0};// the max length of IPv6 28 + 7;
+      switch(sa->family)
+      {
+    	case AF_INET:
+		{
+      		struct sockaddr_in *ipv4Addr = (struct sockaddr_in *)sa;
+      		if (inet_ntop(sa->family, &(ipv4Addr->sin_addr), buffer, sizeof(buffer)) )
+      		{
+    			uint16_t port = ntohs(ipv4Addr->sin_port);
+	    		if (port != 0)
+    			{
+    				snprintf(portBuffer, sizeof(portBuffer), ":%d", port);
+    				strcat(buffer, portBuffer);
+    			}
+    			presentation = buffer;
+    	  	}
+    	  	else
+    	  	{
+    			return -1;
+    	  	}
+		}// end case AF_INET
+		break;
+		case AF_INET6:
+		{
+			struct sockaddr_in6 *ipv6Addr = (struct sockaddr_in6 *)sa;
+      		if (inet_ntop(sa->family, &(ipv6Addr->sin6_addr), buffer, sizeof(buffer)) )
+      		{
+    			uint16_t port = ntohs(ipv6Addr->sin6_port);
+	    		if (port != 0)
+    			{
+    				snprintf(portBuffer, sizeof(portBuffer), ":%d", port);
+    				strcat(buffer, portBuffer);
+    			}
+    			presentation = buffer;
+    	  	}
+    	  	else
+    	  	{
+    			return -1;
+    	  	}
+		}//end case AF_INET6
+		break;
+		default:
+			return -1;
+			break;
+      }//end of switch
+
+		return 0;
+    }// end of func
+
+## 3.9 Heading to readn, writen and readline funcs
+
+A read or write on a stream socket might input or output fewer bytes than requested, but this is not an error condition. The reason is that buffer limits might be reached for the socket in the kernel. All that is required to input or output the remaining bytes is for the caller to invoke the read or write function again.
+
+Nevertheless, we always call our writen function instead of write, in case the implementation returns a short count.
+
+    ssize_t readn(int filedes, void *buff, size_t nbytes); 
+    ssize_t writen(int filedes, const void *buff, size_t nbytes);
+    ssize_t readline(int filedes, void *buff, size_t maxlen);
+     
+    All return: number of bytes read or written, –1 on error
+
+Our three functions look for the error **EINTR** (the system call was interrupted by a caught signal, which we will discuss in more detail in Section 5.9) and continue reading or writing if the error occurs.
+
+
+Good "defensive programming" techniques require these programs to not only expect their counterparts to follow the network protocol, but to check for unexpected network traffic as well. Using stdio to buffer data for performance flies in the face of these goals since the application has no way to tell if unexpected data is being held in the stdio buffers at any given time.
+
+The desire to operate on lines comes up again and again. But our advice is to think in terms of buffers and not lines. Write your code to read buffers of data, and if a line is expected, check the buffer to see if it contains that line.
+
+Source code inclued in read_write_readline.cpp
+
+## 3.10 Summary
+
+* value-result arguments
+* self-defining, family field in socket structure
+* inet_ntop, inet_pton, sock_* functions, getaddrinfo, getpeername, protocol-independent
+* TCP sockets provide a byte stream to an application: There are no record markers. The return value from a read can be less than what we asked for, but this does not indicate an error.
+
+## Exercises
+3.1 if passed by value, the value will be destroyed when the function ends.
+3.2 ISO C++ forbids incrementing a pointer of type 'const void*'
+3.3 
+
+	int inet_aton(const char *strptr, struct in_addr *addrptr);//Returns: 1 if string was valid, 0 on error
+     
+    in_addr_t inet_addr(const char *strptr);//Deprecated, Returns: 32-bit binary network byte ordered IPv4 address; INADDR_NONE if error
+
+The inet_aton and inet_addr functions have traditionally been liberal in what they accept as a dotted-decimal IPv4 address string: allowing from one to four numbers separated by decimal points, and allowing a leading 0x to specify a hexadecimal number, or a leading 0 to specify an octal number. (telnet 0xe, telnet 011110111)
