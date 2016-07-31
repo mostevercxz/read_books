@@ -1,7 +1,9 @@
 **Questions**
+
 1. Web aside ASM:EASM, how to write programs that combine C code with handwritten assembly code?
 2. The two commands *ret*, *popq* both get the value of R[%rsp] two times, valA <-- R[%rsp],valB <-- R[%rsp], why ?
 3. rrmovq, valE <-- valA + 0, why "+0"?
+4. Page 504, psum1 CPE=9cycles/element, why ? How to calculate ?
 4. Sequential implementation of Y86-64 instruction "cmovXX rA, rB" is not right.
 5. What is the sequential implementation of Y86-64 instruction "halt"? (Cause the processor status to be set to HLT, causing it to halt operation.)
 
@@ -486,3 +488,13 @@ The only problem with SEQ is that it is too slow.
 
 ## 4.5 Pipelined Y86-64 implementations
 ### 4.5.1 SEQ + : Rearranging the Computation Stages
+PC update stage comes at the beginning of the clock cycle, rather than at the end. With SEQ+, we create state registers to hold the signals computed during an instruction. Then, as a new clock cycle begins, the values propagate through the exact same logic to compute the PC for the now-current instruction.(pIcode to indicate that on any given cycle, they hold the control signals generated during the **previous cycle**.)
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/4/SEQ+hardware.png "SEQ+ hardware")
+
+### 4.5.2 Inserting pipeline registers
+we insert pipeline registers between the stages of SEQ+ and rearrange signals somewhat, yielding the PIPE– processor, where the “–” in the name signifies that this processor has somewhat less performance than our ultimate processor design. In Figure 4.41, these white boxes are real hardware components.
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/csapp/4/PIPE-hardware.png "PIPE- hardware")
+
+Avoid Data hazards by Stalling(货摊,托辞,停止,拖延)

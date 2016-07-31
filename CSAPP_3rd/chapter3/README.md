@@ -674,6 +674,17 @@ The selection of the different fields of a structure is handled **completely at 
 ### 3.9.2 Unions
 Unions provide a way to circumvent the type system of C, allowing a single object to be referenced according to multiple types. The overall size of a union equals the maximum size of any of its fields.
 
+What is the memory layout of a union?
+
+    union U3{
+    char c;
+    int i[2];
+    double v;
+    };
+
+For pointer p of type union U3 *, references p->c, p->i[0], and p->v would all reference the beginning of the data structure.
+A pointer to a union object, suitably converted, points to each of its members (or if a member is a bit-field, then to the unit in which it resides), and vice versa.
+
 ### 3.9.3 data alignment
 Many computer systems place restrictions on the allowable addresses for the primitive data types, requiring that the address fpr some objects must be a multiple of some value K (typically 2, 4, or 8). 
 
