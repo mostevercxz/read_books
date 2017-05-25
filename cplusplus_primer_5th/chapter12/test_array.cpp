@@ -29,7 +29,7 @@ int main()
     A* ai = new A[2]{a1, a2};//two copy constructor
     */
     A *ai = new A[2]{A(), A()};//just two constructor
-    A *pA = new A(A(A(A(A{}))));//just one constructor
+    //A *pA = new A(A(A(A(A{}))));//just one constructor
     f(ai);//two destructor
     //delete pA;//one destructor
     // two local variable destructor
