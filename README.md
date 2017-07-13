@@ -3,6 +3,7 @@
  - [codding horror,creator of SO](<https://blog.codinghorror.com/>)
  - [antirez, creator of redis](<http://antirez.com/latest/0>)
  - [Eli bendersky,everything from python to llvm](<http://eli.thegreenplace.net/>)
+ - [blog.xuyou.info](<blog.youxu.info>)
 
 ## 想阅读一遍的源码
  - [c,redis](<https://github.com/antirez/redis>)
@@ -23,6 +24,7 @@
  - implement a LR parser
  - The Mythical Man-Month
  - The C programming language, https://www.bell-labs.com/usr/dmr/www/chist.html
+ - Deep Learning, https://www.amazon.cn/%E5%9B%BE%E4%B9%A6/dp/0262035618/ref=sr_1_1?ie=UTF8&qid=1499911243&sr=8-1&keywords=deep+learning
 
 ## What to do when encountering an unfamiliar codebase?
  - Take a lookat filesize,the biggest files contain the meat of the program
