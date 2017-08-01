@@ -4,6 +4,7 @@
  - [antirez, creator of redis](<http://antirez.com/latest/0>)
  - [Eli bendersky,everything from python to llvm](<http://eli.thegreenplace.net/>)
  - [blog.xuyou.info](<blog.youxu.info>)
+ - [小土刀](<http://wdxtub.com/>)
 
 ## 想阅读一遍的源码
  - [c,redis](<https://github.com/antirez/redis>)
@@ -17,13 +18,18 @@
  - [python,to be continued]() Python 3.x source code??
  - [go, to be continued]()
 
-## Books to be read
- - The New Hacker's Dictionary
+## The most influential book
  - Code Complete 2
+ - The pragmatic programmer
+ - The clean coder
+ - Head first design patterns(Gang of Four)
  - SICP, write a scheme interpreter
- - implement a LR parser
  - The Mythical Man-Month
  - The C programming language, https://www.bell-labs.com/usr/dmr/www/chist.html
+
+## Books to be read
+ - The New Hacker's Dictionary
+ - implement a LR parser
  - Deep Learning, https://www.amazon.cn/%E5%9B%BE%E4%B9%A6/dp/0262035618/ref=sr_1_1?ie=UTF8&qid=1499911243&sr=8-1&keywords=deep+learning
 
 ## What to do when encountering an unfamiliar codebase?
@@ -44,3 +50,20 @@
  - Follow up. When people send you e-mails and messages. Answer as fast as you can.
  - The most valuable habit I've developed IMO is reinventing the wheel. When you face a new challenge with new concepts you're unfamiliar with, the best way to get a good grasp of the environment/tools/techniques is to rebuild it (them) from scratch.
  (the difference between reinventing the wheel for practice and learning or just because you can.)
+
+
+## Books about security(reference:https://news.ycombinator.com/item?id=14791255)
+ - The Web Application Hacker's Handbook
+ - Practical Reverse Engineering
+ - Security Engineering(or The Art of Software Security Assessment)
+ - Shellcoder's Handbook
+ - Cryptography Engineering
+ - Gray Hat Python
+ - The IDA Pro Book
+ - Practical Malware Analysis
+ - The Tangled Web
+ - The Mobile Application Hacker's Handbook
+
+## Blogs written by googlers
+https://randomascii.wordpress.com
+intext:about intext:working intext:at intext:google  intext:blog intext:programmer
