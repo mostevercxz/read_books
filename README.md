@@ -5,6 +5,10 @@
  - [Eli bendersky,everything from python to llvm](<http://eli.thegreenplace.net/>)
  - [blog.xuyou.info](<blog.youxu.info>)
  - [小土刀](<http://wdxtub.com/>)
+ - [ceo of SO](<https://www.joelonsoftware.com/2000/08/09/the-joel-test-12-steps-to-better-code/>)
+ - [blogs posted by big company engineering team, such as instagram](<http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value>)
+ - [sam,creator of YC]()
+ - [Paul Gram, co-creator of YC]()
 
 ## 想阅读一遍的源码
  - [c,redis](<https://github.com/antirez/redis>)
@@ -12,6 +16,7 @@
 参考资料:
     - [google nginx code review](<https://code.google.com/archive/p/nginxsrp/wikis/NginxCodeReview.wiki>)
     - [csdn 链接汇总](<http://blog.csdn.net/unix21/article/details/8492617>)
+    - [nginx工作原理](<https://www.nginx.com/blog/thread-pools-boost-performance-9x/>)
  - [csharp, ss](<https://github.com/shadowsocks/shadowsocks-windows>)
  - [c++,protobuf](<https://github.com/google/protobuf>)
  - [c++,STL source code]() HouJie's book, llvm or facebook folly?
