@@ -9,6 +9,9 @@
  - [blogs posted by big company engineering team, such as instagram](<http://instagram-engineering.tumblr.com/post/12202313862/storing-hundreds-of-millions-of-simple-key-value>)
  - [sam,creator of YC]()
  - [Paul Gram, co-creator of YC]()
+ - [Random readings](<https://www.teamten.com/lawrence/writings/>)
+ - [the ryg, a game dev's blog,maths,graphics](<https://fgiesen.wordpress.com/category/maths/>)
+ - [huangz, redis设计与实现](<http://blog.huangz.me/>)
 
 ## 想阅读一遍的源码
  - [c,redis](<https://github.com/antirez/redis>)
