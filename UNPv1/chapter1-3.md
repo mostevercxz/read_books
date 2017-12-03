@@ -48,8 +48,12 @@ Acknowledges:
 # Chapter 1, introduction
 A protocol, an agreement on how those programs will communicate. Before delving into the design details of a protocol, high-level decisions must be made about which program is expected to initiate communication and when responses are expected.
 
-**Client and server on the same Ethernet communicating using TCP**
+**Client and server on the same Ethernet communicating using (Transmission Control Protocol)TCP**
 ![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/1/01fig03.gif "cs communicate layer")
+
+
+
+![alt text](http://7xp1jz.com1.z0.glb.clouddn.com/unpv1/1/different_lans.gif "different_lans")
 
 Routers are the building blocks of WANs. The largest WAN today is the Internet.
 
