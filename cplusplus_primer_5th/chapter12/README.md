@@ -130,6 +130,8 @@ Libraries that support the new standard tend to be dramatically faster than prev
 **Initialize an array of dynamically allocated objects**
 
     int *pia0 = new int[10];//10 uninitialized ints
+    size_t n = 0;
+    int *pVariableSize = new int[n];
     int *pia1 = new int[10]();//10 ints valued initialized to 0
     int *pia2 = new int[10](1);//error, must use braced list of element initializers
     int *pia = new int[10]{0, 1, 2, 3};//the first 4 is initialized, other are value initialized.
@@ -253,4 +255,44 @@ callq _ZdaPv@plt//释放内存
 (Makefile 中调用 g++ -O1,发现汇编代码确实和上面的相似)
 
     
-Smart pointers and dynamically arrays
+**Smart pointers and dynamically arrays**
+
+Member access operators(dot and arrow) are not supported for unique_ptrs to arrays.
+Other ops unchanged.
+
+    unique_ptr<T[]> u;
+    unique_ptr<T[]> u(p);//p is built-in pointer.
+    u[i];
+
+If we want to use shared_ptr, we must provider our own deleter.
+shared_ptr<int> sp(new int[10], [](int *p){delete[] p;});
+sp.reset();//use the lambda to free memory.
+
+### 12.2.2 the allocator class
+
+`new` combines allocating memory with constructing objects in that memory.
+`delete` combines destruction with deallocation.
+
+In general, coupling allocation and construction can be wasteful.(readline prog.)
+More importantly, classes that do not have default constructor can not be dynamically allocated as an array.
+
+    #include <memory>
+    `allocator` provides type-aware allocation of raw, unconstructed memory.
+    allocator<T> a;
+    a.allocate(n);//allocates raw, unconstructed memory to hold n objects of type T.
+    a.deallocate(p, n);//deallocates memory that holds n objects of type T starting at the address in the T* pointer p.
+    a.construct(p, args);//constructs using args
+    a.destroy(p);//destructs T* p
+    
+We must construct objects in order to use memory returned by `allocate`.
+
+Two algorithms that can construct objects in uninitialized memory.
+
+    uninitialized_copy(begin, end, b2);
+    uninitialized_copy_n(begin, number, b2);//copies n elements starting from begin into raw memory starting at b2.
+    uninitialized_fill(begin, end, t);
+    uninitialized_fill_n(begin, number, t);
+    
+## 12.3 A text-query program
+
+
